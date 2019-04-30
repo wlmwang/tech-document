@@ -27,14 +27,18 @@ $ git config -e [--global]  // 编辑Git配置文件
 
 ## 生成 SSH 公钥/私钥
 ```
-$ cd ~/.ssh
-$ ssh-keygen [-t rsa -P '' -C 'example@email.com']
+1. 本地生成密钥对（默认为当前用户的 .ssh/ 目录下）
+$ ssh-kengen -t rsa [-f ~/.ssh/id_rsa]
 
-// 将 ~/.ssh/id_rsa.pub 分发到其他服务器上，并在其 shell 上执行：
-$ cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+2. 拷贝公钥到服务端
+$ scp ~/.ssh/id_rsa.pub remote-user@remote-host:/home
+
+3. 把公钥加入授权列表（服务端）
+$ touch ~/.ssh/authorized_keys
 $ chmod 600 ~/.ssh/authorized_keys
+$ cat /home/id_rsa.pub >> ~/.ssh/authorized_keys
 
-// 也可将 id_rsa.pub 提交到 github上(https://github.com/settings/ssh)
+// 也可将id_rsa.pub内容提交到 github 上，实现无密码代码同步(https://github.com/settings/ssh)
 ```
 
 ## Windows 下使用 TortoiseGit 生成 SSH 公钥/私钥
