@@ -58,9 +58,9 @@
 2. 服务端收到连接请求后，将自己的一些关键信息发给客户端。这些信息包括：
 	* 服务端**自己的公钥**：客户端在收到这个公钥后，会在自己的 "known_hosts" 文件进行搜索。如果找到了相同的公钥，则说明此前连接过该服务器。如果没有找到，则会在终端上显示一段警告信息，由用户来决定是否继续连接。
 		```
-			vagrant@vagrant:~$ ssh kfs-web The authenticity of host 'kfs-web (192.168.1.167)' can't be established. 
-			ECDSA key fingerprint is SHA256:Ql/KnGlolY9eCGuYK3OX3opnSyJQzsbtM3DW/UZIxms. Are you sure you want to 
-			continue connecting (yes/no)?
+		vagrant@vagrant:~$ ssh kfs-web The authenticity of host 'kfs-web (192.168.1.167)' can't be established. 
+		ECDSA key fingerprint is SHA256:Ql/KnGlolY9eCGuYK3OX3opnSyJQzsbtM3DW/UZIxms. Are you sure you want to 
+		continue connecting (yes/no)?
 		```
 	* 服务器所支持的加密算法列表：客户端根据此列表来决定采用哪种加密算法。
 
