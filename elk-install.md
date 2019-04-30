@@ -5,9 +5,9 @@
 2. 应用服务器记录日志到本地磁盘，后台进程监控并发送日志到远程中央服务器（可再经过队列）进行落地（磁盘、搜索引擎等）。
 3. 应用服务器请求队列，由队列消费方进行落地（磁盘、搜索引擎等）。
 4. 应用服务器请求日志服务接口，由该服务选择选择记录介质（磁盘、搜索引擎等）。
-> 其中第 2、3 方案即为主流的 ELK Stack 技术栈。有稳定、分布式、海量存储、可扩展以及便于检索等优点。
-> 典型的一条日志数据流走向：
-	* program -> rsyslog -> file(message.log) -> filebeat -> elasticsearch(localhost:9200) -> kibana
+	* 其中第 2、3 方案即为主流的 ELK Stack 技术栈。有稳定、分布式、海量存储、可扩展以及便于检索等优点。
+	* 典型的一条日志数据流走向：
+		> program -> rsyslog -> file(message.log) -> filebeat -> elasticsearch(localhost:9200) -> kibana
 
 ## 安装 ELK 6.0
 * https://ken.io/note/elk-deploy-guide
