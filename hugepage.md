@@ -7,11 +7,11 @@
     * 对应用程序可见的、并可使用的内存地址是 Virtual Address。每个程序的内存地址都是从 0 开始的；而实际的数据访问是要通过 Physical Address 进行的。
     * 因此，每次内存操作，CPU 都需要从 page table 中把 Virtual Address 翻译成对应的 Physical Address。那么对于大量内存密集型程序来说 page table 的检索就会成为程序的瓶颈。
     * 所以现代 CPU 中就出现了 TLB(Translation Lookaside Buffer) Cache 用于缓存少量热点内存地址的 mapping 关系。（关键点！！！）
-    * 另外，在 Linux 操作系统上运行内存需求量较大的应用程序时，如果其采用的默认页面大小为 4KB，可能会产生较多 TLB Miss 和缺页中断，从而大大影响应用程序的性能。
-* 然而由于制造成本和工艺的限制
-    * 响应时间可以控制在 CPU Cycle 级别的 Cache 容量只能存储几十个对象。
+    * 其次，在 Linux 操作系统上运行内存需求量较大的应用程序时，如果其采用的默认页面大小为 4KB，可能会产生较多 TLB Miss 和缺页中断，从而大大影响应用程序的性能。
+* 另外，由于制造成本和工艺的限制
+    * 响应时间可以控制在 CPU Cycle 级别的 Cache 容量只能存储很少的对象（典型的 TLB 缓存可保存 4 到 4096 个条目）。
     * 那么 TLB Cache 在应对大量热点数据 Virual Address 转换的时候就显得捉襟见肘了。
-    * 我们来算下按照标准的 Linux 页大小 (page size) 4K，一个能缓存 64 元素的 TLB Cache 只能涵盖 4K*64 = 256K 的热点数据的内存地址。
+    * 如：按照标准的 Linux 页大小 (page size) 4K，一个能缓存 64 元素的 TLB Cache 只能涵盖 4K*64 = 256K 的热点数据的内存地址。
 * 于是 Huge Page 就产生了
     * 这里不要把 Virutal Address 和 Windows 上的虚拟内存搞混了。后者是为了应对物理内存不足，而将内容从内存换出到其他设备的技术（类似于 Linux 的 SWAP 机制）。
 ![avatar](images/tlb_lookup.png)
@@ -26,7 +26,7 @@
 * 了解了 Huge Page 的由来和原理后，我们不难总结出
     * 能从 Huge Page 受益的程序必然是那些热点数据分散且至少超过 64 个 4K Page Size 的程序。
     * 此外，如果程序的主要运行时间并不是消耗在 TLB Cache Miss 后的 Page Table Lookup 上，那么 TLB 再怎么大，Page Size 再怎么增加都是徒劳。
-* 在目前常见的 NUMA 体系下 Huge Page 也并非万能钥匙，使用不当甚至会使得程序或者数据库性能下降 10%
+* 尤其，在目前常见的 NUMA 体系下 Huge Page 也并非万能钥匙，使用不当甚至会使得程序或者数据库性能下降 10%
     * 性能下降的原因主要有以下两点
         * CPU 对同一个 Page 抢占增多。对于写操作密集型的应用，Huge Page 会大大增加 Cache 写冲突的发生概率。由于 CPU 独立 Cache 部分的写一致性用的是 MESI 协议。也会导致：CPU 本地 Cache 频繁失效。
         * 类比到数据库就相当于，原来一把用来保护 10 行数据的锁，现在用来锁 1000 行数据了。必然这把锁在线程之间的争抢概率要大大增加。
@@ -38,16 +38,16 @@
         * 假设我们连续申明两个数组，Array A 和 Array B 大小都是 1536K。内存分配时由于第一个 Page 的 2M 没有用满，因此 Array B 就被拆成了两份，分割在了两个 Page 里。而由于内存的亲和配置，一个分配在 Zone 0，而另一个在 Zone 1。那么当某个线程需要访问 Array B 时就不得不通过代价较大的 Inter-Connect 去获取另外一部分数据。
         * ![avatar](images/false_sharing.png)
 
-### Huge Page 使用（三种方式）
+### Huge Page 的使用（三种方式）
 * 使用 mmap + MAP_HUGETLB 直接匿名映射
 * 使用 shmget + SHM_HUGETLB 属性分配
-* mount hugetlbfs 后，在 hugetlbfs 下创建文件，然后通过 mmap 进行映射
+* 使用 hugetlbfs + mmap 进行内存映射
     * 将 hugetlbfs 特殊文件系统挂载到根文件系统的某个目录上去，以使得 hugetlbfs 可以访问。
     * $ mount none /mnt/huge -t hugetlbfs
     * 此后，只要是在 /mnt/huge/ 目录下创建的文件，将其映射到内存中时都会使用 2MB 作为分页的基本单位。
     * 值得一提的是，hugetlbfs 中的文件是不支持读/写系统调用 ( 如 read()/write() 等 ) 的，一般对它的访问都是以内存映射(mmap)的形式进行的。
 * 注:上述方法使用的前提是，系统中加载了 hugetlbfs，且存在空闲大页。可以通过 cat /proc/meminfo 查看是否有空闲内存。
-* 另外，本质上匿名大页也是有对应的大页文件系统中的匿名文件，其实并不是真正的匿名页。
+* 本质上，匿名大页也是有对应的大页文件系统中的匿名文件，其实并不是真正的匿名页。
 * 应用示例：
 ```
 ## 下面例子中给出的大页面应用是简单的，而且如果仅仅是这样的应用，对应用程序来说也是没有任何用处的。
@@ -97,11 +97,15 @@ int main()
         * 修改后使用 sysctl -p 命令重加载内核参数文件 sysctl.conf
     * cat /proc/meminfo | grep Huge  # 查看系统 huge page 设置
 
-### 什么是透明大页
-* 对于内存占用较大的程序，可以通过开启 HugePage 来提升系统性能。但有个要求，就是在编写程序时，代码里需要显示的对 HugePage 进行支持。
+### 什么是透明大页 Transparent HugePages(THP)
+* 对于内存占用较大的程序，可以通过开启 HugePage 来提升系统性能。
+    * 但有个要求，就是在编写程序时，代码里需要显示的对 HugePage 进行支持。
+    * 会导致，传统大页很难手动管理, 而且通常需要对代码进行重大更改才能有效地使用。
 * 而红帽企业版 Linux 为了减少程序开发的复杂性，并对 HugePage 进行支持，部署了 Transparent HugePages。
-    * Transparent HugePages 是一个使管理 Huge Pages 自动化的抽象层
+    * Transparent HugePages 是一个使管理 Huge Pages 自动化的抽象层。可以自动创建、管理和使用传统大页的大多数方面。
     * 实现方案为，操作系统后台有一个叫做 khugepaged 的进程，它会一直扫描所有进程占用的内存，在可能的情况下会把 4k Page 交换为 Huge Pages。
+    * 注：THP 目前只能映射异步内存区域，比如堆和栈空间
+    * 另外，标准大页管理是预分配的方式，而透明大页管理则是动态分配的方式。
 
 ### 为什么 Transparent HugePages（透明大页）对系统的性能会产生影响
 * 在 khugepaged 进行扫描进程占用内存，并将 4k Page 交换为 Huge Pages 的这个过程中，对于操作的内存的各种分配活动都需要各种内存锁，直接影响程序的内存访问性能。
