@@ -1,9 +1,47 @@
 ## 升级gcc-4.8.2
-* 源码安装(CentOS) （其他系统请自行升级）
-    * 缺少编译环境请先安装老的 gcc
-        * $ yum -y install gcc gcc-c++ #kernel-devel
-        * yum install make  # 如果没有 $ make -v
-* 升级步骤
+#### CentOS（其他系统请自行升级）
+
+* 缺少编译环境请先安装老的 gcc
+    * $ yum -y install gcc gcc-c++ #kernel-devel
+    * yum install make  # 如果没有 $ make -v
+* 安装 autoconf, automake
+    * yum whatprovides autoconf automake
+    
+* 源码安装 autoconf, automake, m4, libtool
+```
+## 安装 autoconf
+$ wget http://mirrors.kernel.org/gnu/autoconf/autoconf-2.65.tar.gz
+$ tar -xzvf autoconf-2.65.tar.gz
+$ cd autoconf-2.65
+$ ./configure –prefix=/usr/local
+$ make && make install
+$ autoconf --version
+
+## 安装 automake
+$ wget http://mirrors.kernel.org/gnu/automake/automake-1.11.tar.gz
+$ tar xzvf automake-1.11.tar.gz
+$ cd automake-1.11
+// $ ./bootstrap.sh
+$ ./configure –prefix=/usr/local
+$ make && make install
+$ automake --version
+
+## 安装 libtool
+$ wget http://mirrors.kernel.org/gnu/libtool/libtool-2.2.6b.tar.gz
+$ tar xzvf libtool-2.2.6b.tar.gz
+$ cd libtool-2.2.6b
+$ ./configure –prefix=/usr/local
+$ make && make install
+
+## 安装 m4
+$ wget http://mirrors.kernel.org/gnu/m4/m4-1.4.13.tar.gz \
+$ tar -xzvf m4-1.4.13.tar.gz \
+$ cd m4-1.4.13 \
+$ ./configure –prefix=/usr/local
+$ make && make install
+```
+
+* 源码升级 gcc 步骤
 ```
 $ cd /usr/local/src
 $ wget http://ftp.gnu.org/gnu/gcc/gcc-4.8.2/gcc-4.8.2.tar.bz2
