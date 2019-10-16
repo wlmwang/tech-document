@@ -80,8 +80,8 @@ sudo yum makecache fast # 更新yum源缓存
 sudo yum install docker-ce
 ```
 
-## 错误
-#### docker启动报错。docker: Error response from daemon: OCI runtime create failed: container_linux.go:348
+## 常见错误
+### docker启动报错。docker: Error response from daemon: OCI runtime create failed: container_linux.go:348
 > 原因：docker的版本和linux的内核版本不兼容
 
 #### 方案一
@@ -124,7 +124,9 @@ $ sudo yum makecache fast
   > $ sudo yum install docker-ce
 
   报错的原因：
-  docker: Error response from daemon: OCI runtime create failed: unable to retrieve OCI runtime error (open /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/262f67d9beb653ac60b1c7cb3b2e183d7595b4a4a93f0dcfb0ce689a588cedcd/log.json: no such file or directory): docker-runc did not terminate sucessfully: unknown.
+  docker: Error response from daemon: OCI runtime create failed: unable to retrieve OCI runtime error (open 
+  /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/262f67d9beb653ac60b1c7cb3b2e183d7595b4a4a93f0dcfb0ce689a588cedcd/log.json: 
+  no such file or directory): docker-runc did not terminate sucessfully: unknown.
   ERRO[0000] error waiting for container: context canceled
 
 # 正确的，应该选用一个可用的版本：
