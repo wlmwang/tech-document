@@ -3,7 +3,9 @@
 官方安装文档：
 https://docs.docker.com/install/linux/docker-ce/ubuntu/
 https://docs.docker.com/install/linux/docker-ce/centos/
+```
 
+```
 注意: 本镜像只提供 Debian/Ubuntu/Fedora/CentOS/RHEL 的 docker 软件包，非 dockerhub
 https://mirror.tuna.tsinghua.edu.cn/help/docker-ce/
 https://www.jianshu.com/p/c76c1ab6d6db
@@ -44,7 +46,7 @@ $ sudo apt-get install apt-transport-https ca-certificates curl gnupg2 software-
 
 * 最后安装
 ```
-$ sudo apt-get update
+$ sudo apt-get update  # 更新apt-get源缓存
 $ sudo apt-get install docker-ce
 ```
 
@@ -82,9 +84,12 @@ sudo yum install docker-ce
 #### docker启动报错。docker: Error response from daemon: OCI runtime create failed: container_linux.go:348
 > 原因：docker的版本和linux的内核版本不兼容
 
-1. 升级 linux 内核，执行下列命令（注意：更新了内核后，需要重启系统）
+#### 方案一
+* 升级 linux 内核，执行下列命令（注意：更新了内核后，需要重启系统）
     > apt-get install --install-recommends linux-generic-lts-xenial
-2. 把 docker 降低到稳定的 17 版本
+
+#### 方案二
+* 把 docker 降低到稳定的 17 版本
 ```
 Debian/Ubuntu
 * 卸载 docker-ce
@@ -95,7 +100,9 @@ $ apt-cache madison docker-ce
 
 * 安装稳定版本
 $ sudo apt-get install docker-ce=17.12.1~ce-0~ubuntu
+```
 
+```
 CentOS/RHEL: 
 * 卸载 docker-ce
 $ sudo yum remove docker-ce
@@ -116,7 +123,7 @@ $ sudo yum makecache fast
   > 注意不要用安装最新版本，采的坑命令如下（会导致之后docker跑不起来）：
   > $ sudo yum install docker-ce
 
-  报错的原因是这样：
+  报错的原因：
   docker: Error response from daemon: OCI runtime create failed: unable to retrieve OCI runtime error (open /run/docker/containerd/daemon/io.containerd.runtime.v1.linux/moby/262f67d9beb653ac60b1c7cb3b2e183d7595b4a4a93f0dcfb0ce689a588cedcd/log.json: no such file or directory): docker-runc did not terminate sucessfully: unknown.
   ERRO[0000] error waiting for container: context canceled
 
@@ -127,11 +134,16 @@ $ yum list docker-ce --showduplicates | sort -r
 * 选择一个版本
 $ sudo yum install docker-ce-17.06.2.ce
 
+```
+
+```
 * 测试、启动 docker
 $ systemctl enable docker
 $ systemctl start docker
 $ docker run hello-world
+```
 
+```
 # 卸载docker
 $ sudo yum remove docker-ce-17.06.2.ce
 
