@@ -25,7 +25,7 @@
 * 为服务端生成证书
 	1. 生成私钥
 		> $ openssl genrsa -out server.key 2048
-	2. 生成签署请求证书（原始证书？）。作为 https 证书，提示输入的字段 commone name 必须与要申请证书的域名一致
+	2. 生成签署请求证书（原始证书）。作为 https 证书，提示输入的字段 commone name 必须与要申请证书的域名一致
 		> $ openssl req -new -key server.key -out server.csr
 	3. csr 文件必须有 ca 的签名才可形成证书。可将此文件发送到 verisign 等地方由它验证（收费）。何不自己做 ca 签名！
 		> $ openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt
