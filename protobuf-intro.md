@@ -2,9 +2,6 @@
 ```
 https://www.ibm.com/developerworks/cn/linux/l-cn-gpb/index.html
 https://linux.cn/article-7931-1.html
-
-API:
-https://developers.google.com/protocol-buffers/docs/reference/cpp
 ```
 
 # 简介
@@ -53,24 +50,40 @@ $ tree -L 2 $INSTALL_DIR
 -- lib/            # 静态/动态库
 ```
 
-# 演示
-#### lm.helloworld.proto 文件（命名原则 packageName.MessageName.proto）
+# 示例
+#### tutorial.addressbook.proto 文件（建议命名原则 packageName.MessageName.proto）
+* https://developers.google.com/protocol-buffers/docs/cpptutorial
 ```
 // proto3 编译器，在第一行非空白非注释行，必须写
 // syntax ="proto3";
 
-package lm;
-message innerType
+package tutorial;
+
+message Person
 {
-   string   str = 1;
+    required string name = 1;
+    required int32 id = 2;
+    optional string email = 3;
+    
+    enum PhoneType
+    {
+        MOBILE = 0; // proto3 版本中，首成员必须为0，成员不应有相同的值
+        HOME = 1;
+        WORK = 2;
+    }
+    
+    message PhoneNumber
+    {
+        required string number = 1;
+        optional PhoneType type = 2 [default = HOME];
+    }
+    
+    repeated PhoneNumber phone = 4;
 }
-message helloworld 
+
+message AddressBook
 {
-   required int32   id = 1;     // ID 
-   required string  str = 2;    // str 
-   optional int32   opt = 3;    // optional field
-   repeated int32   pks = 4;    // repeated field
-   innerType inner = 5;
+    repeated Person person = 1;
 }
 ```
 * proto 文件以一个 package 声明开始
@@ -110,7 +123,7 @@ message helloworld
         * 使用 required 弊多于利；他们更愿意使用 optional 和 repeated 而不是 required。
 
 * proto3 相比 proto2 的重要区别
-    * 支持更多语言，也更简洁。建议使用 proto3
+    * 支持更多语言，也更简洁。新用户，建议使用 proto3
     * 在第一行非空白非注释行，必须写明 syntax ="proto3";
     * 字段修饰符移除了 "required"；并把 "optional" 改名为 "singular"（message 定义中，并不会出现 singular）
     * repeated 字段默认采用 packed 编码
@@ -136,15 +149,16 @@ message helloworld
 
 #### 编译 .proto 文件
 ```
-现在运行编译器
+现在运行 protoc 编译器：
+$ protoc -I=$SRC_DIR --cpp_out=$DST_DIR $SRC_DIR/tutorial.addressbook.proto
+
 * -I=$SRC_DIR ：指定源目录（你的应用程序源代码位于哪里 --- 如果你没有提供任何值，将使用当前目录）
 * --cpp_out=$DST_DIR ：目标目录（你想要生成的代码放在哪里，常与 $SRC_DIR 相同）
-* $SRC_DIR/lm.helloworld.proto ：消息定义 .proto 文件路径
-$ protoc -I=$SRC_DIR --cpp_out=$DST_DIR $SRC_DIR/lm.helloworld.proto
+* $SRC_DIR/tutorial.addressbook.proto ：消息定义 .proto 文件路径
 
 命令将生成两个文件：
-lm.helloworld.pb.h      # 定义了 C++ 类的头文件
-lm.helloworld.pb.cc     # C++ 类的实现文件
+tutorial.addressbook.pb.h      # 定义了 C++ 类的头文件
+tutorial.addressbook.pb.cc     # C++ 类的实现文件
 ```
 
 #### 编写 writer/Reader
@@ -153,34 +167,50 @@ lm.helloworld.pb.cc     # C++ 类的实现文件
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "lm.helloworld.pb.h"
+#include "tutorial.addressbook.pb.h"
 
 using namespace std;
 
+void writeAddressBook(tutorial::Person* person)
+{
+    person->set_id(100);
+    
+    person->set_name("admin");
+    
+    string* email = person->mutable_email();
+    email->assign("admin@example.com"); // *email = "admin@example.com";
+    
+    tutorial::Person::PhoneNumber* phone = person->add_phone();
+    phone->set_number(10086);
+    phone->set_type(tutorial::Person::MOBILE);
+}
+
 int main(int argc, char* argv[])
 {
-    GOOGLE_PROTOBUF_VERIFY_VERSION;   // pb
-
-    lm::helloworld msg1; 
-    msg1.set_id(101); 
-    msg1.set_str("hello"); 
-    // repeated
-    msg1.add_pks(200);
-    msg1.add_pks(201);
-    // inner message type
-    lm::innerType* inner = msg1.mutable_inner();
-    inner->set_str("world");
+    // Verify that the version of the library that we linked against is
+    // compatible with the version of the headers we compiled against.
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+    
+    tutorial::AddressBook addressBook;
     
     {
-        fstream output("./helloworld.bin", ios::out | ios::trunc | ios::binary); 
-        
-        if (!msg1.SerializeToOstream(&output)) { 
-            cerr << "Failed to write msg." << endl; 
-            return -1; 
-        }
+        tutorial::Person* person = addressBook.add_person();
+        writeAddressBook(person);
     }
     
-    google::protobuf::ShutdownProtobufLibrary();  // pb
+    {
+        fstream output("./addressbook.bin", ios::out | ios::trunc | ios::binary); 
+        
+        if (!addressBook.SerializeToOstream(&output)) { 
+            cerr << "Failed to write address book." << endl; 
+            return -1; 
+        }
+        
+        output.close();
+    }
+    
+    // Optional: Delete all global objects allocated by libprotobuf.
+    google::protobuf::ShutdownProtobufLibrary();
     
     return 0;
 }
@@ -191,39 +221,63 @@ int main(int argc, char* argv[])
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "lm.helloworld.pb.h"
+#include "tutorial.addressbook.pb.h"
 
 using namespace std;
 
-void ListMsg(const lm::helloworld& msg)
+void readAddressBook(const tutorial::AddressBook& addressBook)
 {
-    cout << msg.id() << endl; 
-    cout << msg.str() << endl;
-    for (int i = 0; i < msg.pks_size(); i++) {
-        cout << msg.pks(i) << endl;
-    }
-    if (msg.has_inner()) {
-        cout << msg.inner().str() << endl;
+    for (int i = 0; i < addressBook.person_size(); i++) {
+        const tutorial::Person& person = addressBook.person(i);
+        
+        cout << "ID: " << person.id() << endl;
+        cout << "Name: " << person.name() << endl;
+        cout << "E-mail: " << person.email() << endl;
+        
+        for (int j = 0; j < person.phone_size(); j++) {
+            const tutorial::Person::PhoneNumber& phone = person.phone(j);
+            
+            switch (phone.type()) {
+            case tutorial::Person::MOBILE:
+                cout << "Mobile phone #: ";
+                break;
+            case tutorial::Person::HOME:
+                cout << "Home phone #: ";
+                break;
+            case tutorial::Person::WORK:
+                cout << "Work phone #: ";
+                break;
+            }
+            
+            cout << phone.number() << endl;
+        }
     }
 }
 
 int main(int argc, char* argv[])
 {
+    // Verify that the version of the library that we linked against is
+    // compatible with the version of the headers we compiled against.
     GOOGLE_PROTOBUF_VERIFY_VERSION;   // pb
     
-    lm::helloworld msg1; 
+    tutorial::AddressBook addressBook;
     
     {
-        fstream input("./helloworld.bin", ios::in | ios::binary); 
+        fstream input("./addressbook.bin", ios::in | ios::binary); 
         
-        if (!msg1.ParseFromIstream(&input)) {
-            cerr << "Failed to parse msg." << endl; 
+        if (!addressBook.ParseFromIstream(&input)) {
+            cerr << "Failed to parse address book." << endl; 
             return -1; 
         }
-    } 
-
-    ListMsg(msg1);
+        
+        input.close();
+    }
     
+    {
+        readAddressBook(addressBook);
+    }
+    
+    // Optional: Delete all global objects allocated by libprotobuf.
     google::protobuf::ShutdownProtobufLibrary();  // pb
     
     return 0; 
@@ -233,54 +287,58 @@ int main(int argc, char* argv[])
 * 注意
 ```
 1. GOOGLE_PROTOBUF_VERIFY_VERSION
-它是一种好的实践，虽然不是严格必须的。每个 .pb.cc 文件在初始化时会自动调用这个宏。
-> 作用：在使用 C++ Protocol Buffer 库之前执行该宏。它可以保证避免不小心链接到一个与编译的头文件版本不兼容的库版本。如果被检查出来版本不匹配，程序将会终止。
+它是一种好的实践，虽然不是严格必须的。注：每个 .pb.cc 文件在初始化时会自动调用这个宏。
+在使用 C++ Protocol Buffer 库之前执行该宏。
+> 作用：它可以保证避免不小心链接到一个与编译的头文件版本不兼容的库版本。
+> 如果被检查出来版本不匹配，程序将会终止。
 
 2. ShutdownProtobufLibrary()
+它是一种好的实践，虽然不是严格必须的。
 在程序最后调用 ShutdownProtobufLibrary()。
-> 作用：它用于释放 Protocol Buffer 库申请的所有全局对象。
+> 作用：它可以用于释放 Protocol Buffer 库申请的所有全局对象。
 > 对大部分程序，这不是必须的，因为虽然程序只是简单退出，但是 OS 会处理释放程序的所有内存。
 > 然而，如果你使用了内存泄漏检测工具，工具要求全部对象都要释放，或者你正在写一个 Protocol Buffer 库，该库可能会被一个进程多次加载和卸载，那么你可能需要强制 Protocol Buffer 清除所有东西。
 ```
 
 * 编译
 ```
-$ g++ -o writer writer.cc lm.helloworld.pb.cc -I/path/to/protobuf/include -L/path/to/protobuf/lib -lprotobuf -lpthread
-$ g++ -o reader reader.cc lm.helloworld.pb.cc -I/path/to/protobuf/include -L/path/to/protobuf/lib -lprotobuf -lpthread
+$ g++ -std=c++11 -o writer writer.cc tutorial.addressbook.pb.cc -I./ -I/path/to/protobuf/include -L/path/to/protobuf/lib -lprotobuf -lpthread
+$ g++ -std=c++11 -o reader reader.cc tutorial.addressbook.pb.cc -I./ -I/path/to/protobuf/include -L/path/to/protobuf/lib -lprotobuf -lpthread
+
+* 编译 proto3 版本时，必须要 -std=c++11
+* 必须要链接 -lpthread 库
 
 * 链接方式：
-在指定的 protobuf 库路径中，如果存在动态连接库，则编译的程序优先选择动态链接，否则则采用静态链接的方式。
+编译的程序优先选择动态链接，否则则采用静态链接的方式。
 
 * 可能你需要设定 LD_LIBRARY_PATH 变量（动态库加载路径）
 $ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/path/to/protobuf/lib
-
-* 编译时，-lpthread 必须要链接
 ```
 
 * 运行
 ```
 $ ./writer
 $ ./reader
-101
-Hello
-200
-201
-world
+ID: 100
+Name: admin
+E-mail: admin@example.com
+Mobile phone #: 10086
 ```
 
 #### 部分 API 概述
-* 所有 protocol buffer 类都有读写选定类型消息的方法，这些方法使用了特定的 protocol buffer 二进制格式。
+* https://developers.google.com/protocol-buffers/docs/reference/cpp
 ```
-// 标准的消息方法。用于检查和操作整个消息
+// 标准的消息方法
+// 用于检查和操作整个消息
 * bool IsInitialized() const;       // 检查是否所有 required 字段已经被设置。
 * string DebugString() const;       // 返回人类可读的消息表示，对调试特别有用。
 * void CopyFrom(const Person& from);// 使用给定的值重写消息。
 * void Clear();                     // 清除所有元素为空的状态。
 
-// 解析和序列化。所有 protocol buffer 类都有读写你选定类型消息的方法，这些方法使用了特定的 protocol buffer 二进制格式
+// 解析和序列化
+// 所有 protocol buffer 类都有读写你选定类型消息的方法，这些方法使用了特定的 protocol buffer 二进制格式
 * bool SerializeToString(string* output) const;     // 序列化消息并将消息字节数据存储在给定的字符串中。注意，字节数据是二进制格式的，而不是文本格式。
 * bool ParseFromString(const string& data);         // 从给定的字符创解析消息。
 * bool SerializeToOstream(ostream* output) const;   // 将消息写到给定的 C++ ostream。
 * bool ParseFromIstream(istream* input);            // 从给定的 C++ istream 解析消息。
 ```
-
