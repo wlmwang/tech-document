@@ -236,6 +236,7 @@ $ ./identify -list format |grep HEIC
 ```
 
 # 安装 PHP 扩展 imagick
+```
 $ wget http://pecl.php.net/get/imagick-3.4.4.tgz
 $ tar -zxvf imagick-3.4.4.tgz
 $ cd imagick-3.4.4/
@@ -244,7 +245,7 @@ $ ./configure --with-php-config=/usr/bin/php-config --with-imagick=/opt/web/phpc
 $ make
 $ make install
 $ php --ri imagick
-
+```
 
 # 附录
 ```
