@@ -14,7 +14,7 @@ $ vagrant up # 启动box
 ```
 * vagrant box add {title} {url} # 添加 box
 $ vagrant box add my-box D:/boxes/centos65-x86_64-20140116.box 
-$ vagrant box add ubuntu/trusty64 # 添加下载远程的box
+$ vagrant box add ubuntu/trusty64 # 添加下载远程的box（从Hashicorp官网上下载 ubuntu/trusty64 这个box）
 
 * vagrant init {title} # 初始化 box
 $ vagrant init my-box
