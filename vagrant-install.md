@@ -94,9 +94,6 @@ end
 Vagrant.configure("2") do |config|
   config.vm.synced_folder "src/", "/srv/website"
 end
-```
-* 第一个参数为 Host 机器上的目录，第二个参数为虚拟机上的目录。
-
-```
+第一个参数为 Host 机器上的目录，第二个参数为虚拟机上的目录
 ```
 
