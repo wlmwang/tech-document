@@ -1,23 +1,24 @@
-# README
+# my career
 
 ```c++
+// my career
 #include <cstdio>
-#include <iostream>
-#define JAVASCRIPT "php -r \"print 'Java is the best language int the world.';\""
+#define JOKER "php -r \"print 'Java(PHP) is the best language in the world.';\""
 int main(int argc, char* agrv[]) {
-    struct shell {
-        shell() {
-            vc_ = ::popen(JAVASCRIPT, "r");
-            size_t n  = ::fread(vb_, 1, sizeof vb_, vc_);
-            vb_[n] = 0;
-            std::cout << vb_ << std::endl;
+    struct bash {
+    public:
+        bash() {
+            c_ = ::popen(JOKER, "r");
+            n_[::fread(n_, 1, sizeof n_, c_)] = 0;
+            printf("%s\n", n_);
         }
-        ~shell() {
-            ::pclose(vc_);
+        ~bash() {
+            ::pclose(c_);
         }
     private:
-        FILE* vc_;
-        char  vb_[64];
-    } golang;
+        FILE* c_;
+        char  n_[64];
+    } go;
 }
+
 ```
