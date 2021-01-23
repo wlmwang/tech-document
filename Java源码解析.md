@@ -29,27 +29,28 @@
 				* Cloneable
 				* Serializable
 			* 解析
-				* 可高效的进行随机访问（可按索引访问）的列表结构，用 RandomAccess 标识
+				* 可高效的进行随机访问（按索引访问）的列表结构，用 RandomAccess 标识
 				* 底层使用 Object[] 数组存放列表元素
 					* Java 对象实例里带有类型信息，与存放的容器无关（前提是可转换）。比如 Object[] 可以存放任何对象，因为他是所有类的基类
-					* 所以 toArray() 有两个不同的重载版本，分别返回 Object[] 和 T[] 数组
+						* 所以 toArray() 有两个不同的重载版本，分别返回 Object[] 和 T[] 数组
 						* 其中泛型版本，传递的参数类型起到控制方法的返回类型，并且当长度足够时，直接使用该数组，否则底层会创建一个 T[] 数组
-							* 可不可以去掉该泛型版本，只提供一个 toArray()，其返回 T[] 的类型的数组
-				* 默认构造列表的初始容量为 10，不过此时并没有分配内存（直到第一次添加元素时分配），用一个 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 静态属性来标识
-				* 列表为空时（size == 0），底层 `elementData` 指向 Object[] {}，用一个 EMPTY_ELEMENTDATA 静态属性来标识
-				* modCount 属性字段用来标识列表的底层数组的结构是否有变化。结构性变化指的是：增、删元素
-					* 用来支持迭代器的快速失败算法，即，快速检测并发更新动作，然后立即抛出 ConcurrentModificationException  异常
-					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用
-				* 'overflow-conscious code' 源码中的这条注释针对列表长度最大不会超过 Integer.MAX_VALUE
-					* 超过时，int值溢出为负值，底层会抛出 OOM 异常；每次扩容，数组长度增加 1.5 倍
-				* 'c.toArray might (incorrectly) not return Object[] (see 6260652)' 源码中的这条注释针对的是
-					* Arrays.asList() 创建的列表（java.util.Arrays$ArrayList），c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
+							* 思考：可不可以去掉该泛型版本，只提供一个 toArray()，其返回 T[] 的类型的数组
+				* 默认构造列表的初始容量为 10，不过此时并没有分配内存（直到添加元素时分配），用一个 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 常量来标识
+					* 数组每次扩容，长度增加 1.5 倍
+				* 列表为空时（size == 0），底层 `elementData` 指向 Object[] {}，用一个 EMPTY_ELEMENTDATA 常量来标识
+				* modCount 属性字段用来标识列表的底层数组是否有结构性变化。结构性变化指的是：增、删元素
+					* 用来支持迭代器的快速失败算法，即，快速检测是否有并发更新，然后立即抛出 ConcurrentModificationException 异常
+					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，主要用来防止迭代器失效
+				* `overflow-conscious code` 源码中的这条注释针对列表长度最大不会超过 Integer.MAX_VALUE
+					* 超过时，int会溢出为负值，底层会直接抛出 OOM 异常
+				* `c.toArray might (incorrectly) not return Object[] (see 6260652)` 源码中的这条注释针对的是
+					* Arrays.asList() 创建的列表（java.util.Arrays$ArrayList），其 c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
 						* 思考：T[] 类型的数组，是可以赋值给 Object[]，为什么还要处理成 Object[]
-						* 思考：T[] 类型的数组，是可以赋值给 Object[]，是否说明 T[] 的超类是 Object[]？
-				* 底层很多地方都调用了：Arrays.copyOf(original, newLength, newType) / Arrays.copyOf(original, newLength)
-					* 他的作用是：总是会分配一个新的数组内存空间，然后将旧的 original 内存数据按字节复制到新内存中
-						* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，创建一个 componentType[length] 类型数组
-						* 复制内存数据使用的是 System.arraycopy()，它是一个 native 方法，底层使用 memmove()，即，按字节拷贝
+						* 思考：T[] 类型的数组，是可以赋值给 Object[]，是否说明 T[] 的超类是 Object[]
+				* 代码中很多地方都调用了：Arrays.copyOf(original, newLength, newType) / Arrays.copyOf(original, newLength)
+					* 作用是：总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中
+						* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，用来创建一个 componentType[length] 类型数组
+						* 拷贝数组内存数据使用的是 System.arraycopy()，它是一个 native 方法，底层使用 memmove()，即，按字节拷贝
 				* AbstractList.SubList 是内部类，但它还是使用 parent 字段去引用父列表，主要是为实现 SubList 递归生成子列表的功能
 				* clone() 时，底层使用的 Object[] 数组会被自动拷贝，即，新建后复制，是按字节拷贝
 				* writeObject/readObject
@@ -66,8 +67,8 @@
 				* 虽然该列表也提供了随机访问接口，但效率低下，请不要使用
 					* 从该列表没有实现 RandomAccess 接口，就提示了我们不应该对它进行随机访问
 				* modCount 属性字段用来标识列表的底层数组的结构是否有变化。结构性变化指的是：增、删元素
-					* 用来支持迭代器的快速失败算法，即，快速检测并发更新动作，然后立即抛出 ConcurrentModificationException  异常
-					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用
+					* 用来支持迭代器的快速失败算法，即，快速检测是否有并发更新，然后立即抛出 ConcurrentModificationException 异常
+					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，主要用来防止迭代器失效
 				* clone() 时，底层使用的链表节点也会被拷贝（循环调用 add() 方法）
 				* LLSpliterator 分隔迭代器
 					* 注：trySplit() 方法返回的是一个数组分隔迭代器 Spliterators.ArraySpliterator
