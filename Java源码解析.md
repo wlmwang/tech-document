@@ -104,7 +104,7 @@
 				* Serializable
 			* 解析
 				* 可高效的进行访问的散列结构，底层使用 HashMap 容器，详细说明请看 HashMap 描述
-				* 集中元素，被保存至 HashMap<E, Object> 映射表的键中，值是一个“无用”的常量 PRESENT = new Object()
+				* 集容器的元素，被保存至 HashMap<E, Object> 映射表的键中，值是一个“无用”的常量 PRESENT = new Object()
 				* 迭代器返回的是 HashMap<E, Object> 的键视图
 		* TreeSet
 		* LinkedHashSet
@@ -141,12 +141,11 @@
 			* next() 与 remove() 必须成对使用。即，在 remove() 前，需要 next() 访问该元素；使用 next()，强烈建议先调用 hasNext()
 				* 内部 lastRet 字段是上次访问的元素的索引，也是回退索引，remove() 后，迭代器的 cursor 将回退到该值，以防止迭代器失效
 			* 综合以上的接口设计以及附加的限制，看似笨拙，实际上可以解决 C++ 中令人讨厌的迭代器失效问题
-					* 在 C++ 中，迭代器 erase() 一般会直接放到容器自身或一个公共的算法函数上，使用上也没有任何限制，由此引发的问题程序员需处理
-					* 注：太过灵活，反而会带来更多的问题
+				* 在 C++ 中，迭代器 erase() 一般会直接放到容器自身或一个公共的算法函数上，使用上也没有任何限制，由此引发的问题程序员需处理
+				* 所谓，欲求灵活，先受复杂
 					
 * 工具类
 	* Arrays
-		* Arrays.asList
 	* Lists
 	* Collections
 
