@@ -1,7 +1,9 @@
 # Java源码解析
 
 ## 说明
-文档针对 Java 1.8 源码进行解析重点 - 帮助你能更有效的阅读源码
+	针对 Java 1.8 源码进行解析
+	文档伴着源码食用，效果最佳
+
 
 ## 集合框架 - Collection
 * 基础容器
@@ -16,11 +18,11 @@
 				* 部分接口依赖 compareTo()，当然也可以传入比较器，如 sort()
 			* Queue - 有序可重复集合，不提供根据元素的索引来访问，使用 add()/offer(),push()/pop(),poll()/peek(),remove() 来访问
 				* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
-				* PriorityQueue 底层是最小堆，需要排序，需实现 Comparable<T> 接口，当然也可以传入比较器
+				* PriorityQueue 底层是最小堆，需实现 Comparable<T> 接口，当然也可以传入比较器
 			* Set - 代表无序不可重复集合，只能根据元素本身来访问
-				* 依赖 equals(), hashCode()。通常情况下（自定义类），你应该重新定义这两个接口的实现
+				* 依赖 equals(), hashCode()。通常情况下，你应该重新定义这两个接口的实现
 			* TreeSet - 代表有序不可重复集合
-				* 除依赖 equals(), hashCode() 外，还依赖 compareTo()。通常情况下（自定义类），你应该重新定义这三个接口的实现
+				* 除依赖 equals(), hashCode() 外，还依赖 compareTo()。通常情况下，你应该重新定义这三个接口的实现
 	* 实现
 		* ArrayList<E>
 			* 继承
@@ -31,28 +33,27 @@
 			* 解析
 				* 可高效的进行随机访问（按索引访问）的列表结构，用 RandomAccess 标识
 				* 底层使用 Object[] 数组存放列表元素
-					* Java 对象实例里带有类型信息，与存放的容器无关（前提是可转换）。比如 Object[] 可以存放任何对象，因为他是所有类的基类
+					* Java 对象实例（数组也是对象）带有类型信息，与存放的容器无关（需可转换）。比如 Object[] 可以存放任何对象，因为他是所有类的基类
 						* 所以 toArray() 有两个不同的重载版本，分别返回 Object[] 和 T[] 数组
 						* 其中泛型版本，传递的参数类型起到控制方法的返回类型，并且当长度足够时，直接使用该数组，否则底层会创建一个 T[] 数组
-							* 思考：可不可以去掉该泛型版本，只提供一个 toArray()，其返回 T[] 的类型的数组
-				* 默认构造列表的初始容量为 10，不过此时并没有分配内存（直到添加元素时分配），用一个 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 常量来标识
-					* 数组每次扩容，长度增加 1.5 倍
-				* 列表为空时（size == 0），底层 `elementData` 指向 Object[] {}，用一个 EMPTY_ELEMENTDATA 常量来标识
-				* modCount 属性字段用来标识列表的底层数组是否有结构性变化。结构性变化指的是：增、删元素
+				* 默认构造的列表容量为 10，不过此时并没有分配内存（直到添加元素时分配），用一个 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 常量来标识
+					* 数组每次扩容，长度增加当前容量的 1.5 倍
+				* 列表为空时（size == 0），`elementData` 指向空数组，用一个 EMPTY_ELEMENTDATA 常量来标识
+				* modCount 属性字段用来标识列表的底层数组是否有结构性的变化。结构性变化指的是：增、删元素
 					* 用来支持迭代器的快速失败算法，即，快速检测是否有并发更新，然后立即抛出 ConcurrentModificationException 异常
-					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，主要用来防止迭代器失效
+					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，可用来防止迭代器失效
 				* `overflow-conscious code` 源码中的这条注释针对列表长度最大不会超过 Integer.MAX_VALUE
 					* 超过时，int会溢出为负值，底层会直接抛出 OOM 异常
 				* `c.toArray might (incorrectly) not return Object[] (see 6260652)` 源码中的这条注释针对的是
 					* Arrays.asList() 创建的列表（java.util.Arrays$ArrayList），其 c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
-						* 思考：T[] 类型的数组，是可以赋值给 Object[]，为什么还要处理成 Object[]
-						* 思考：T[] 类型的数组，是可以赋值给 Object[]，是否说明 T[] 的超类是 Object[]
 				* 代码中很多地方都调用了：Arrays.copyOf(original, newLength, newType) / Arrays.copyOf(original, newLength)
 					* 作用是：总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中
 						* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，用来创建一个 componentType[length] 类型数组
 						* 拷贝数组内存数据使用的是 System.arraycopy()，它是一个 native 方法，底层使用 memmove()，即，按字节拷贝
-				* AbstractList.SubList 是内部类，但它还是使用 parent 字段去引用父列表，主要是为实现 SubList 递归生成子列表的功能
 				* clone() 时，底层使用的 Object[] 数组会被自动拷贝，即，新建后复制，是按字节拷贝
+				* AbstractList.SubList 是内部类，但它还是使用 parent 字段去引用父列表，主要是为实现 SubList 递归生成子列表的功能
+				* AbstractList.ArrayListSpliterator 分隔迭代器，主要用来支持集合流的特性
+					* 算法核心是对迭代器进行二分切割
 				* writeObject/readObject
 		* LinkedList<E>
 			* 继承
@@ -66,11 +67,12 @@
 				* 与 ArrayDeque 相比，随机访问效率不高，但频繁的插入、删除效率会更佳，这也是线性表存在的意义
 				* 虽然该列表也提供了随机访问接口，但效率低下，请不要使用
 					* 从该列表没有实现 RandomAccess 接口，就提示了我们不应该对它进行随机访问
-				* modCount 属性字段用来标识列表的底层数组的结构是否有变化。结构性变化指的是：增、删元素
+				* modCount 属性字段用来标识列表的底层数组是否有结构性的变化。结构性变化指的是：增、删元素
 					* 用来支持迭代器的快速失败算法，即，快速检测是否有并发更新，然后立即抛出 ConcurrentModificationException 异常
-					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，主要用来防止迭代器失效
+					* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，可用来防止迭代器失效
 				* clone() 时，底层使用的链表节点也会被拷贝（循环调用 add() 方法）
-				* LLSpliterator 分隔迭代器
+				* LinkedList.LLSpliterator 分隔迭代器，主要用来支持集合流的特性
+					* 算法核心是对迭代器进行二分切割
 					* 注：trySplit() 方法返回的是一个数组分隔迭代器 Spliterators.ArraySpliterator
 				* writeObject/readObject
 		* ArrayDeque<E>
@@ -84,8 +86,8 @@
 				* 底层使用 Object[] 数组存放列表元素
 				* 与 LinkedList 相比，随机访问效率更高，但频繁的插入、删除效率欠佳，因为这可能会导致底层数组的扩容（内存要重新分配及拷贝）
 				* head 和 tail 索引，支持高效的头尾操作。head 指向末端索引，tail 从起始索引开始
-					* 每次 head == tail 时，自动扩容，底层的数组长度增加 1 倍。长度总是 2 的幂次方（思考：为什么？）
-					* 底层使用的结构也常被称为循环数组
+					* 每次 head == tail 时，自动扩容，底层的数组长度增加 1 倍。长度总是 2 的幂次方
+					* 底层使用的数据结构也常被称为循环数组
 		* PriorityQueue<E>
 			* 继承
 				* AbstractQueue - Queue
@@ -101,7 +103,9 @@
 				* Cloneable
 				* Serializable
 			* 解析
-				* 可高效的进行访问的散列结构，底层使用 HashMap 容器
+				* 可高效的进行访问的散列结构，底层使用 HashMap 容器，详细说明请看 HashMap 描述
+				* 集中元素，被保存至 HashMap<E, Object> 映射表的键中，值是一个“无用”的常量 PRESENT = new Object()
+				* 迭代器返回的是 HashMap<E, Object> 的键视图
 		* TreeSet
 		* LinkedHashSet
 * 同步组件
@@ -111,15 +115,17 @@
 * 迭代器
 	* 接口
 		* ListIterator - Iterator
+		* Iterator
 		* Iterable
 		* 特性
-			* Iterable - 若一个列表容器实现了该接口，则它可以使用 for-in 语法结构进行遍历
+			* Iterable - 若一个容器实现了该接口，则它就可以使用 for-in 语法结构进行迭代遍历
 			* Iterator - 通用迭代器，只包含 next(), hasNext(), remove(), forEachRemaining() 接口
 				* 调用 remove() 前，需调用 next()；调用 next() 前，强烈建议先调用 hasNext()
 				* forEachRemaining() 接口不可改变列表的结构，否则立即抛出 ConcurrentModificationException 异常
 			* ListIterator - 列表迭代器，主要应用在与位置相关的容器上，比如 ArrayList, LinkedList, SubList
 				* 相比 Iterator 接口，增加了向前迭代接口，如 hasPrevious(),previous(),previousIndex(),nextIndex()
 				* 提供增、删、改、查接口，如 set(E e), add(E e)；不管概念还是实现上，这两个接口都与位置相关
+			* 注：本质上，迭代器的工作是辅助具体的容器进行访问索引的自动化管理，它不持有实际的数据
 	* 实现
 		* ArrayList.Itr
 		* ArrayList.ListItr
@@ -129,12 +135,15 @@
 		* ArrayDeque.DescendingIterator
 		* PriorityQueue.Itr
 		* 解析
-			* 创建迭代器时，立即复制原始容器的 modCount 到迭代器实例中
-				* 后续任何操作都会比对迭代器与原始容器的 modCount 值是否相等，不等会立即抛出 ConcurrentModificationException
+			* 创建迭代器时，立即拷贝原始容器的 modCount 到迭代器实例中
+				* 后续任何迭代器操作都会比对迭代器与原始容器的 modCount 值是否相等，若不相等，会立即抛出 ConcurrentModificationException
+				* 这么设计，可以解决并发问题，也可以解决迭代器失效问题
 			* next() 与 remove() 必须成对使用。即，在 remove() 前，需要 next() 访问该元素；使用 next()，强烈建议先调用 hasNext()
-				* 思考：为什么要这么设计？
-			* lastRet 是上次访问元素的索引，也是回退索引，remove() 后，迭代器的 cursor 将指向该值
-				* 思考：为什么要将 remove() 设计到迭代器中？可不可以将它放到容器自身方法里或写在一个公共的算法类上？就像 C++ 那样
+				* 内部 lastRet 字段是上次访问的元素的索引，也是回退索引，remove() 后，迭代器的 cursor 将回退到该值，以防止迭代器失效
+			* 综合以上的接口设计以及附加的限制，看似笨拙，实际上可以解决 C++ 中令人讨厌的迭代器失效问题
+					* 在 C++ 中，迭代器 erase() 一般会直接放到容器自身或一个公共的算法函数上，使用上也没有任何限制，由此引发的问题程序员需处理
+					* 注：太过灵活，反而会带来更多的问题
+					
 * 工具类
 	* Arrays
 		* Arrays.asList
@@ -149,7 +158,7 @@
 		* NavigableMap - SortedMap
 		* 特性
 			* Map - 存储 k-v 键值对的无序集合；可根据 k 访问 v；键数据类型依赖 equals(), hashCode()
-				* 部分接口会使值也依赖 equals()，如：containsValue。如果使用 EntrySet 视图，值会依赖 equals()
+				* 部分接口会使“值”也依赖 equals()，如：containsValue。如果使用 EntrySet 视图，“值”会依赖 equals()
 			* TreeMap - 存储 k-v 键值对的有序集合；可根据 k 访问 v；键数据类型除依赖 equals(), hashCode()，还依赖 compareTo()
 	* 实现
 		* HashMap<K,V>
@@ -159,23 +168,40 @@
 				* Cloneable
 				* Serializable
 			* 解析
-				* 默认构造函数，负载因子为 0.75，hash 桶的初始容量为 16，最大不能超过 2^30，并且一定是 2 的指数倍（非常重要！思考：为什么？）
+				* 默认构造函数，负载因子为 0.75，hash 桶的初始容量为 16，最大不能超过 2^30，并且一定是 2 的指数倍（非常重要！）
 					* 第一次添加元素时，初始化容量为 16，扩容阈值 threshold 设置为容量的 0.75 倍
-						* 负载因子作用：当元素个数超过当前容量的 loadFactor 倍后会触发扩容；每次会扩容为现有容量的 2 倍（非常重要！resize() 依赖于此）
+						* 负载因子作用：当映射表的总元素个数超过当前桶容量的 loadFactor 倍后会触发扩容；每次会扩容为现有容量的 2 倍
 					* resize() 扩容方法，是一个精心设计过的算法，甚是巧妙！
-						* threshold 在初始化后（容量乘以 loadFactor），threshold 的变更只需经过左移一位即可，其值肯定也是等于容量乘以 loadFactor 的
-						* 扩容后，每个元素无需用 e.hash & (newCap-1) 进行逐个 rehash，只需要计算 e.hash & oldCap
+						* threshold 在初始化后（容量乘以 loadFactor），之后 threshold 的变更只需经过左移一位即可，其值肯定也是等于当前容量乘以 loadFactor
+						* 扩容后，每个元素无需用 e.hash & (newCap-1) 进行逐个计算桶索引，只需要计算 e.hash & oldCap，并进行判断：
 							* 当为 0 时，说明之前该 hash 高位并没有被截断，重新 rehash 必然是原来的值，也就还在原来的桶中
-							* 当不为 0 时，说明之前该 hash 高位被截断了，重新 rehash 必然是原来的 2 倍，桶的索引也就要左移一位
+							* 当不为 0 时，说明之前该 hash 高位被截断了，重新 rehash 必然是原来桶的索引加上原来桶容量的长度
 					* tableSizeFor(cap) 也是一个精心设计过的算法，甚是巧妙！
 						* tableSizeFor(cap) 返回一个大于 cap 的最小的 2 的指数倍的值
+							* 桶容量限制成总是 2 的指数倍，可以将桶索引计算变成按位与运算；rehash 时也不用重新计算每个元素的桶索引
 						* tableSizeFor(cap) 算法思路为，将 cap-1 后的值，最高位为 1 后面所有位也置 1，最后在 +1
-						* 注：我见过很多使用循环来解决该问题的，包括 chromium/php 等源码，当然也可能是因为他们没有简便的逻辑右移运算符
-				* HashMap 解决哈希冲突使用了拉链法
+							* 注：我见过很多使用循环来解决该问题的，包括 chromium/php 等源码，当然也可能是因为他们没有简便的逻辑右移运算符
+				* HashMap<K,V> 使用 HashMap.Node<K,V> - Map.Entry<K,V> 数据结构包装键、值对
+					* HashMap.Node<K,V> 中 next 字段用来支持拉链算法，HashMap 解决哈希冲突使用了拉链法
+						* 注：Node 重写了 hashCode() 方法，让 k-v 都参与计算。主要是为了 HashMap.entrySet() 返回的 Set 集的唯一性要求
 					* 为了进一步优化，当某个桶中的冲突元素大于等于 8，链表将被转化成红黑树
-					* 内部类 HashMap.Node<K,V> 为 hash 表中数据类型，next 字段用来支持拉链算法
-						* 注意：Node重写了 hashCode() 方法，让 k-v 都参与计算，主要是为了 HashMap.values() 返回的 Set 集的唯一性要求
-				* remove() 有两个不同的重载版本，可以置顶 key 匹配或者 key-value 都匹配；replace也有两个版本，指定除了 key，是否还要 value 也要匹配
+				* HashMap.remove() 有两个不同的重载版本，可以置顶 key 匹配或者 key-value 都匹配；replace也有两个版本，指定除了 key，是否还要 value 也要匹配
+				* 键值视图：HashMap<K,V>.entrySet() 方法返回一个键的 Set<Map.Entry<K,V>> 集
+					* 之后即可使用集的方式操作映射表。比如，删除元素、遍历迭代，分隔迭代、转换数组列表等
+					* 第一次调用，会将视图实例缓存至 HashMap<K,V>.entrySet 字段中。底层实现类：HashMap<K,V>.EntrySet
+					* 视图、及其迭代器操作会反映到原始映射表
+						* 视图中，remove(Object o) 接口，Object 为 Map.Entry<K,V>，删除键、值都匹配的元素
+					* Map.Entry<K,V> 重写了 equals() 方法，匹配时键、值都参与了 equals() 计算
+				* 键视图：HashMap<K,V>.keySet() 方法返回一个键的 Set<K> 集
+					* 之后即可使用集的方式操作键集。比如，删除元素、遍历迭代，分隔迭代、转成数组列表等
+					* 第一次调用，会将视图实例缓存至 HashMap<K,V>.keySet 字段中。底层实现类：HashMap<K,V>.KeySet
+					* 视图、及其迭代器操作会反映到原始映射表
+				* 值视图：HashMap<K,V>.values() 方法返回一个值的 Collection<V> 集合
+					* 之后即可使用集合的方式操作值集合。比如，删除元素、遍历迭代，分隔迭代、转成数组列表等
+					* 第一次调用，会将视图实例缓存至 HashMap<K,V>.values 字段中。底层实现类：HashMap<K,V>.Values
+					* 视图、及其迭代器操作会反映到原始映射表
+						* 视图中，remove(Object o) 接口，Object 为 V，本质上是删除第一个与该“值对象”匹配的那个键
+						* 视图中，迭代器删除接口，本质上是删除当前迭代到的 entrySet 的那个键
 		* TreeMap
 		* LinkedHashMap
 		* IdentityHashMap
@@ -186,10 +212,12 @@
 	* ConcurrentHashMap
 	* ConcurrentSkipListMap
 * 迭代器
-	* Iterable
-	* Iterator
-* 视图
-	* KeySet/values/...
+	* EntryIterator
+	* HashIterator
+	* KeyIterator
+	* ValueIterator
+	* EntrySpliterator
+	* KeySpliterator
 
 
 ## IO框架
