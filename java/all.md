@@ -1,8 +1,8 @@
 # Java源码解析
 
 ## 说明
-* 针对 Java 1.8 源码进行解析
-* 文档伴着源码食用，效果最佳
+* 文档针对 Java 1.8 源码进行解析
+* 伴随源码食用，效果更佳
 
 
 ## 集合框架 - Collection
@@ -12,6 +12,8 @@
 		* Deque - Queue - Collection
 		* Collection - Iterable
 		* RandomAccess
+		* NavigableSet - SortedSet - Set
+		* Set
 		* 特性
 			* List - 有序可重复集合，可直接根据元素的索引来访问
 				* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
@@ -19,10 +21,12 @@
 			* Queue - 有序可重复集合，不提供根据元素的索引来访问，使用 add()/offer(),push()/pop(),poll()/peek(),remove() 来访问
 				* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
 				* PriorityQueue 底层是最小堆，需实现 Comparable<T> 接口，当然也可以传入比较器
+				* Deque 是双端队列
 			* Set - 代表无序不可重复集合，只能根据元素本身来访问
 				* 依赖 equals(), hashCode()。通常情况下，你应该重新定义这两个接口的实现
-			* TreeSet - 代表有序不可重复集合
+			* SortedSet - 代表有序不可重复集合
 				* 除依赖 equals(), hashCode() 外，还依赖 compareTo()。通常情况下，你应该重新定义这三个接口的实现
+			* NavigableSet - SortedSet 的子接口，增加了范围查找、降序 Set，以及增强的获取的部分 Set 方法
 	* 实现
 		* ArrayList<E>
 			* 继承
@@ -186,12 +190,12 @@
 ## 集合框架 - Map
 * 基础容器
 	* 接口
-		* AbstractMap - Map
-		* NavigableMap - SortedMap
+		* NavigableMap - SortedMap - Map
+		* Map
 		* 特性
 			* Map - 存储 k-v 键值对的无序集合；可根据 k 访问 v；键数据类型依赖 equals(), hashCode()
 				* 部分接口会使“值”也依赖 equals()，如：containsValue。如果使用 EntrySet 视图，“值”会依赖 equals()
-			* TreeMap - 存储 k-v 键值对的有序集合；可根据 k 访问 v；键数据类型除依赖 equals(), hashCode()，还依赖 compareTo()
+			* SortedMap - 存储 k-v 键值对的有序集合；可根据 k 访问 v；键数据类型除依赖 equals(), hashCode()，还依赖 compareTo()
 	* 实现
 		* HashMap<K,V>
 			* 继承
@@ -253,6 +257,87 @@
 * 同步组件
 	* ConcurrentHashMap
 	* ConcurrentSkipListMap
+
+
+## 流框架 - Stream
+* 注：Stream不像其他章节可以按照单独类顺序介绍即可；若按整体介绍本节内容会更容易理解，这就要求有图文配合，待续...
+
+* 基础组件
+	* Stream/IntStream/LongStream/...
+	* PipelineHelper/ReferencePipeline/IntPipeline/LongPipeline/...
+	* StreamSupport/Streams/Collectors/...
+* 有状态/无状态
+	* StatefulOp/StatelessOp
+* 终结/非终结
+	* min/max/count/forEach/toArray/reduce/[any|all|none]Match/find[First|Any]/...
+	* filter/skip/distinct/limit/sorted/map/flatMap/peek/...
+
+
+## 时间框架
+* 基础组件
+	* 接口
+		* Temporal
+		* TemporalAdjuster
+		* TemporalUnit
+		* ChronoLocalDate
+		* ChronoZonedDateTime
+		* 特性
+			* Temporal - 定义了如何读取和操纵以时间建模的对象的值
+			* TemporalAdjuster - 用更精细的方式操纵日期，不再局限于一次只能改变它的一个值，并且还可按照需求定义自己的日期转换器
+	* 实现
+		* Instant
+			* 不可变对象，代表时间线上的一个瞬时点（时间戳），该瞬间点精确到纳秒分辨率，底层使用 long 存储秒、int 存储纳秒
+				* 时间戳：典型的以 Unix 纪元年时间（1970-01-01T00:00:00Z）开始所经历的秒数进行建模
+			* 公共接口
+				* Instant Instant.now()
+					* 获取当前时间戳实例
+					* 底层使用 System.currentTimeMillis() 的 native 方法获取当前毫秒时间戳；时区被设置为 ZoneOffset.UTC
+				* Instant Instant.ofEpochSecond() / Instant.ofEpochMilli()
+					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间点为纪元后所经历的时间
+				* Instant Instant.parse() 
+					* 根据 IOS 字符串时间创建时间戳实例，比如 "2021-01-27T16:26:00Z"
+				* Instant Instant.with(TemporalField field, long newValue)
+					* 调整时间对象，直接指定秒、纳秒、毫秒值。比如：将获取当前时间 100 秒后的时间戳实例：
+						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getEpochSecond() + 100);
+						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getLong(TemporalField.INSTANT_SECONDS) + 100);
+				* Instant Instant.plus(long amountToAdd, TemporalUnit unit)
+					* 调整时间对象，增加一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期后的时间戳实例：
+						* Instant.now().plus(7, ChronoUnit.DAYS);
+				* Instant Instant.minus(long amountToSubtract, TemporalUnit unit)
+					* 调整时间对象，减去一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期前的时间戳实例：
+						* Instant.now().minus(7, ChronoUnit.DAYS);
+					* 注：底层调用实现会将其转换成 Instant.plus(-amountToSubtract, unit);
+				* long Instant.until(Temporal endExclusive, TemporalUnit unit)
+					* 计算当前时间戳到 endExclusive 时间戳之间的时间差，返回的整形值，单位由 unit 指定。比如：获取 1 秒后时间戳与当前时间戳差值
+						* Instant.now().until(Instant.now().plusMillis(1000), ChronoUnit.SECONDS);
+				* ZonedDateTime atZone(ZoneId zone)
+					* 获取当前时间戳上附加时区的实例。比如：获取将当前时间戳附加上中国时区
+						* Instant.now().atZone(ZoneId.of("+08"));	// ZoneId.of("Asia/Shanghai")
+						* Instant.now().atZone(TimeZone.getTimeZone("GMT+08:00").toZoneId());	// TimeZone.getTimeZone("Asia/Shanghai")
+						* Instant.now().atZone(ZoneOffset.of("+08"));	// ZoneOffset.ofHours(8)
+		* LocalDate
+			* 不可变对象，代表一个日期，它不存储或表示时间或时区。月份范围 [1,12]，日子范围 [1,31]
+			* 它是对日期的描述，可用于生日；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
+		* LocalTime
+			* 不可变对象，代表一个时间，纳秒精度；它不存储或表示日期或时区
+			* 它是在挂钟上看到的当地时间的描述；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
+		* LocalDateTime
+			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它不存储或表示时区
+			* 它是对日子的描述，如用于生日，结合当地时间在挂钟上看到的；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
+		* ZonedDateTime
+			* ZonedDateTime.parse("2021-01-27T20:02:00.000+08:00")
+		* Duration
+		* Period
+* 工具类
+	* Clock
+	* Clock.SystemClock
+	* Clock.FixedClock
+	* Clock.OffsetClock
+	* Clock.TickClock
+	* ChronoField
+	* ChronoUnit
+	* SimpleDateFormat
+	* DateTimeFormatter
 
 ## IO框架
 * 基础组件
@@ -487,20 +572,6 @@
 	* Charset
 
 
-## stream框架
-* 基础组件
-	* Stream/IntStream/LongStream/...
-	* PipelineHelper/ReferencePipeline/IntPipeline/LongPipeline/...
-	* StreamSupport/Streams/Collectors/...
-* 有状态/无状态
-	* StatefulOp/StatelessOp
-* 终结/非终结
-	* min/max/count/forEach/toArray/reduce/[any|all|none]Match/find[First|Any]/...
-	* filter/skip/distinct/limit/sorted/map/flatMap/peek/...
-
-* 注：本节较为复杂，stream不像其他章节可以按照单独类顺序介绍。stream框架只有按整体介绍才能理解，这就要求有图文配合，待续...
-
-
 ## 网络框架 - BIO
 
 
@@ -508,9 +579,6 @@
 
 
 ## 网络框架 - HTTP
-
-
-## 时间框架
 
 
 ## 日志框架
