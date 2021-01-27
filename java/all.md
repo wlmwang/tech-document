@@ -325,7 +325,12 @@
 			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它不存储或表示时区
 			* 它是对日子的描述，如用于生日，结合当地时间在挂钟上看到的；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
 		* ZonedDateTime
-			* ZonedDateTime.parse("2021-01-27T20:02:00.000+08:00")
+			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它在 LocalDateTime 基础上增加了时区信息
+			* 公共接口
+				* ZonedDateTime.parse("2021-01-27T20:02:00.000+08:00")
+					* 从字符串创建 ZonedDateTime
+				* ZonedDateTime.now(zoneId)
+					* 获取其他时区的当前日期和时间
 		* Duration
 		* Period
 * 工具类
@@ -336,8 +341,11 @@
 	* Clock.TickClock
 	* ChronoField
 	* ChronoUnit
-	* SimpleDateFormat
+	* ZoneId
+		* ZoneId.getAvailableZoneIds()
 	* DateTimeFormatter
+		* DateTimeFormatter.ISO_DATE
+		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
 ## IO框架
 * 基础组件
