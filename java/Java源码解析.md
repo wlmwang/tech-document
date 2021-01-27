@@ -1,8 +1,8 @@
 # Java源码解析
 
 ## 说明
-	针对 Java 1.8 源码进行解析
-	文档伴着源码食用，效果最佳
+* 针对 Java 1.8 源码进行解析
+* 文档伴着源码食用，效果最佳
 
 
 ## 集合框架 - Collection
@@ -45,7 +45,7 @@
 				* `overflow-conscious code` 源码中的这条注释针对列表长度最大不会超过 Integer.MAX_VALUE
 					* 超过时，int会溢出为负值，底层会直接抛出 OOM 异常
 				* `c.toArray might (incorrectly) not return Object[] (see 6260652)` 源码中的这条注释针对的是
-					* Arrays.asList() 创建的列表（java.util.Arrays$ArrayList），其 c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
+					* Arrays.asList() 创建的列表（java.util.Arrays.ArrayList），其 c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
 				* 代码中很多地方都调用了：Arrays.copyOf(original, newLength, newType) / Arrays.copyOf(original, newLength)
 					* 作用是：总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中
 						* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，用来创建一个 componentType[length] 类型数组
@@ -108,10 +108,6 @@
 				* 迭代器返回的是 HashMap<E, Object> 的键视图
 		* TreeSet
 		* LinkedHashSet
-* 同步组件
-	* CopyOnWriteArrayList
-	* CopyOnWriteArraySet
-	* ConcurrentSkipListSet
 * 迭代器
 	* 接口
 		* ListIterator - Iterator
@@ -146,8 +142,45 @@
 					
 * 工具类
 	* Arrays
-	* Lists
+		* asList()
+			* 构建 Arrays.ArrayList<E> 实体，与 ArrayList<E> 基本一致，但底层使用的存储容器是 E[] 数组
+				* 这会使得 toArray() 方法返回 T[] 类型数据。虽然该方法返回类型是 Object[]，但请记住这是容器，和泛型没什么区别
+		* sort()/parallelSort()
+			* 使用优化的快排算法，就地排序，各种重载版本
+		* binarySearch()
+			* 二分查找算法，要求数据源已排序，各种重载版本
+		* copyOf()/copyOf()
+			* 总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中
+				* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，用来创建一个 componentType[length] 类型数组
+				* 拷贝数组内存数据使用的是 System.arraycopy()，它是一个 native 方法，底层使用 memmove()，即，按字节拷贝
+		* stream()
+			* 返回基于数组参数构建的集合流，各种重载版本
+		* equals()/hashCode()/toString()/fill()
+			* 封装数组的常见的对象方法，简单处理 null 值情况，算法本身也是常规的迭代运算
 	* Collections
+		* synchronizedList(List<T> list)/synchronizedList(List<T> list, Object mutex)
+			* 将非线程安全的 List 集合转换为线程安全的
+			* 返回 Collections.SynchronizedRandomAccessList<E>/Collections.SynchronizedList<E> 对象
+			* SynchronizedRandomAccessList - SynchronizedList - SynchronizedCollection
+				* 默认构造，使用 this 对象锁作用同步锁
+				* 底层将源 List<E> 方法包装一层 synchronized (mutex){...} 来达到线程安全
+			* 注：如果使用迭代器，必须由使用人员自行添加同步手段
+		* synchronizedSet(Set<T> s)/synchronizedSet(Set<T> s, Object mutex) | synchronizedSortedSet(Set<T> s)/synchronizedSortedSet(Set<T> s, Object mutex)
+			* 将非线程安全的 Set/SortedSet 集合转换为线程安全的
+			* 返回 Collections.SynchronizedSet<E>/Collections.SynchronizedSortedSet<E>
+			* SynchronizedSet - SynchronizedCollection - Set | SynchronizedSortedSet - SynchronizedSet - SortedSet
+				* 默认构造，使用 this 对象锁作用同步锁
+				* 底层将源 Set<E>|SortedSet<E> 方法包装一层 synchronized (mutex){...} 来达到线程安全
+			* 注：如果使用迭代器，必须由使用人员自行添加同步手段
+		* synchronizedCollection()
+			* 将非线程安全的 Collection 集合转换为线程安全的
+			* synchronizedList/synchronizedSet/... 的父类。算法思想一致
+			* 注：如果使用迭代器，必须由使用人员自行添加同步手段
+		* synchronizedMap()
+			* 将非线程安全的 Map 集合转换为线程安全的
+			* 算法思想与 synchronizedList/synchronizedSet 没有本质区别。
+				* 不过，相比集合，Map有视图，会返回线程安全版本，即 SynchronizedSet/SynchronizedCollection
+			* 注：一般我们不使用这种封装的线程安全 Map 映射，而使用性能更好的 ConcurrentHashMap
 
 
 ## 集合框架 - Map
@@ -207,9 +240,6 @@
 		* WeakHashMap
 		* Hashtable
 		* Dictionary
-* 同步组件
-	* ConcurrentHashMap
-	* ConcurrentSkipListMap
 * 迭代器
 	* EntryIterator
 	* HashIterator
@@ -217,7 +247,12 @@
 	* ValueIterator
 	* EntrySpliterator
 	* KeySpliterator
-
+	* 解析
+		* 不会直接使用，而使用键值视图
+		* 迭代器原理与使用，请看《集合框架 - Collection》
+* 同步组件
+	* ConcurrentHashMap
+	* ConcurrentSkipListMap
 
 ## IO框架
 * 基础组件
@@ -462,6 +497,8 @@
 * 终结/非终结
 	* min/max/count/forEach/toArray/reduce/[any|all|none]Match/find[First|Any]/...
 	* filter/skip/distinct/limit/sorted/map/flatMap/peek/...
+
+* 注：本节较为复杂，stream不像其他章节可以按照单独类顺序介绍。stream框架只有按整体介绍才能理解，这就要求有图文配合，待续...
 
 
 ## 网络框架 - BIO
