@@ -14,6 +14,7 @@
 		* RandomAccess
 		* NavigableSet - SortedSet - Set
 		* Set
+		* Iterator
 		* 特性
 			* List - 有序可重复集合，可直接根据元素的索引来访问
 				* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
@@ -27,6 +28,7 @@
 			* SortedSet - 代表有序不可重复集合
 				* 除依赖 equals(), hashCode() 外，还依赖 compareTo()。通常情况下，你应该重新定义这三个接口的实现
 			* NavigableSet - SortedSet 的子接口，增加了范围查找、降序 Set，以及增强的获取的部分 Set 方法
+			* Iterator - 本质上，迭代器的工作是辅助具体的容器进行访问索引的自动化管理，它不持有实际的数据
 	* 实现
 		* ArrayList<E>
 			* 继承
@@ -125,7 +127,6 @@
 			* ListIterator - 列表迭代器，主要应用在与位置相关的容器上，比如 ArrayList, LinkedList, SubList
 				* 相比 Iterator 接口，增加了向前迭代接口，如 hasPrevious(),previous(),previousIndex(),nextIndex()
 				* 提供增、删、改、查接口，如 set(E e), add(E e)；不管概念还是实现上，这两个接口都与位置相关
-			* 注：本质上，迭代器的工作是辅助具体的容器进行访问索引的自动化管理，它不持有实际的数据
 	* 实现
 		* ArrayList.Itr
 		* ArrayList.ListItr
@@ -142,7 +143,7 @@
 				* 内部 lastRet 字段是上次访问的元素的索引，也是回退索引，remove() 后，迭代器的 cursor 将回退到该值，以防止迭代器失效
 			* 综合以上的接口设计以及附加的限制，看似笨拙，实际上可以解决 C++ 中令人讨厌的迭代器失效问题
 				* 在 C++ 中，迭代器 erase() 一般会直接放到容器自身或一个公共的算法函数上，使用上也没有任何限制，由此引发的问题程序员需处理
-				* 所谓，欲求灵活，先受复杂
+				* 灵活与复杂同在
 					
 * 工具类
 	* Arrays
@@ -252,15 +253,15 @@
 	* EntrySpliterator
 	* KeySpliterator
 	* 解析
-		* 不会直接使用，而使用键值视图
-		* 迭代器原理与使用，请看《集合框架 - Collection》
+		* 不会直接使用，而使用键、值视图
+		* 迭代器的解析，请看《集合框架 - Collection》
 * 同步组件
 	* ConcurrentHashMap
 	* ConcurrentSkipListMap
 
 
 ## 流框架 - Stream
-* 注：Stream不像其他章节可以按照单独类顺序介绍即可；若按整体介绍本节内容会更容易理解，这就要求有图文配合，待续...
+* 注：Stream不像其他章节可以按照单独类顺序介绍；Stream若按整体介绍会变得更易理解，配合图文更佳。待续...
 
 * 基础组件
 	* Stream/IntStream/LongStream/...
@@ -271,6 +272,8 @@
 * 终结/非终结
 	* min/max/count/forEach/toArray/reduce/[any|all|none]Match/find[First|Any]/...
 	* filter/skip/distinct/limit/sorted/map/flatMap/peek/...
+* 工具类
+	* StreamSupport
 
 
 ## 时间框架
@@ -289,37 +292,43 @@
 			* 不可变对象，代表时间线上的一个瞬时点（时间戳），该瞬间点精确到纳秒分辨率，底层使用 long 存储秒、int 存储纳秒
 				* 时间戳：典型的以 Unix 纪元年时间（1970-01-01T00:00:00Z）开始所经历的秒数进行建模
 			* 公共接口
-				* Instant Instant.now()
+				* static Instant now()
 					* 获取当前时间戳实例
 					* 底层使用 System.currentTimeMillis() 的 native 方法获取当前毫秒时间戳；时区被设置为 ZoneOffset.UTC
-				* Instant Instant.ofEpochSecond() / Instant.ofEpochMilli()
+				* static Instant ofEpochSecond() / static ofEpochMilli()
 					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间点为纪元后所经历的时间
-				* Instant Instant.parse() 
+				* static Instant from(TemporalAccessor temporal) 
+					* 根据 temporal 实例创建一个时间戳实例
+				* static Instant parse() 
 					* 根据 IOS 字符串时间创建时间戳实例，比如 "2021-01-27T16:26:00Z"
-				* Instant Instant.with(TemporalField field, long newValue)
-					* 调整时间对象，直接指定秒、纳秒、毫秒值。比如：将获取当前时间 100 秒后的时间戳实例：
+				* boolean isSupported(TemporalField field)
+					* 检查时间戳是否支持某个时间字段。field 可以是 ChronoField 枚举中的值
+				* boolean isSupported(TemporalUnit unit)
+					* 检查时间戳是否支持某个时间单位。field 可以是 ChronoUnit 枚举中的值
+				* Instant with(TemporalField field, long newValue)
+					* 基于当前时间戳返回调整后的时间戳对象，直接指定秒、纳秒、毫秒值。比如：将获取当前时间 100 秒后的时间戳实例：
 						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getEpochSecond() + 100);
 						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getLong(TemporalField.INSTANT_SECONDS) + 100);
-				* Instant Instant.plus(long amountToAdd, TemporalUnit unit)
-					* 调整时间对象，增加一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期后的时间戳实例：
+				* Instant plus(long amountToAdd, TemporalUnit unit)
+					* 基于当前时间戳返回调整后的时间戳对象，增加一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期后的时间戳实例：
 						* Instant.now().plus(7, ChronoUnit.DAYS);
 				* Instant Instant.minus(long amountToSubtract, TemporalUnit unit)
-					* 调整时间对象，减去一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期前的时间戳实例：
+					* 基于当前时间戳返回调整后的时间戳对象，减去一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期前的时间戳实例：
 						* Instant.now().minus(7, ChronoUnit.DAYS);
 					* 注：底层调用实现会将其转换成 Instant.plus(-amountToSubtract, unit);
-				* long Instant.until(Temporal endExclusive, TemporalUnit unit)
-					* 计算当前时间戳到 endExclusive 时间戳之间的时间差，返回的整形值，单位由 unit 指定。比如：获取 1 秒后时间戳与当前时间戳差值
+				* long until(Temporal endExclusive, TemporalUnit unit)
+					* 计算当前时间戳到 endExclusive 时间戳之间的时间差，返回一个整形值，单位由 unit 指定。比如：获取 1 秒后时间戳与当前时间戳差值
 						* Instant.now().until(Instant.now().plusMillis(1000), ChronoUnit.SECONDS);
 				* ZonedDateTime atZone(ZoneId zone)
-					* 获取当前时间戳上附加时区的实例。比如：获取将当前时间戳附加上中国时区
+					* 获取当前时间戳上附加时区的日期实例。比如：获取将当前时间戳附加上中国时区
 						* Instant.now().atZone(ZoneId.of("+08"));	// ZoneId.of("Asia/Shanghai")
 						* Instant.now().atZone(TimeZone.getTimeZone("GMT+08:00").toZoneId());	// TimeZone.getTimeZone("Asia/Shanghai")
 						* Instant.now().atZone(ZoneOffset.of("+08"));	// ZoneOffset.ofHours(8)
 		* LocalDate
-			* 不可变对象，代表一个日期，它不存储或表示时间或时区。月份范围 [1,12]，日子范围 [1,31]
+			* 不可变对象，代表一个日期，它不存储或表示时间或时区。年份范围 [-999,999,999, +999,999,999]，月份范围 [1,12]，日子范围 [1,31]
 			* 它是对日期的描述，可用于生日；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
 		* LocalTime
-			* 不可变对象，代表一个时间，纳秒精度；它不存储或表示日期或时区
+			* 不可变对象，代表一个时间，纳秒精度；它不存储或表示日期或时区。
 			* 它是在挂钟上看到的当地时间的描述；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
 		* LocalDateTime
 			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它不存储或表示时区
@@ -334,6 +343,11 @@
 		* Duration
 		* Period
 * 工具类
+	* Year
+	* Month
+	* DayOfWeek
+	* YearMonth
+	* MonthDay
 	* Clock
 	* Clock.SystemClock
 	* Clock.FixedClock
@@ -346,6 +360,7 @@
 	* DateTimeFormatter
 		* DateTimeFormatter.ISO_DATE
 		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
+
 
 ## IO框架
 * 基础组件
@@ -569,16 +584,16 @@
 		* sun.nio.ch.FileChannelImpl
 			* java.nio.channels.FileChannel
 * 工具类
-	* Scanner
 	* Path
 	* Paths
 	* File
 	* Files
-	* FileDescriptor
 	* StreamEncoder
 	* StreamDecoder
 	* Charset
-
+	* FileDescriptor
+	* Scanner
+	
 
 ## 网络框架 - BIO
 
