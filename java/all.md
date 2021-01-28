@@ -389,12 +389,21 @@
 			* 解析
 				* 字节流、节点流
 				* 非线程安全，不提供 mark()/reset() 的支持；直接 IO 支持，底层的 flush() 为空操作
-				* 内部持有的 fd 字段是一个 FileDescriptor 类型的对象，它不同于 C/C++ 中 int/FILE 类型的文件描述符或句柄
-					* 它是一种特定结构的不透明句柄，表示打开的文件、套接字或其他资源。概念和作用上与其他语言的文件描述符区别不大
-					* 特别是，它会保存所有持有它的对象引用，从而可以做到其中任何一个流在关闭时，与之关联的所有流都可关闭
-						* 比如 FileInputStream.close() 中，调用了 FileDescriptor.closeAll(), 它会关闭所有持有相同 fd 的流对象
-							* FileInputStream 有个构造函数是由外部传递一个 FileDescriptor 对象，就可能有多个 FileInputStream 引用同一个 fd 对象
+				* 内部持有的 fd 字段是一个 FileDescriptor 类型的对象；Java 虚拟机通过该类实现对文件的定位
+					* FileDescriptor 有两个字段 fd 和 handle
+						* fd 是文件的描述符。即，操作系统中的整型文件描述符
+						* handle 是文件的句柄。即，操作系统用中来操作文件资源的句柄
+					* FileDescriptor 还会保存所有持有它的流对象引用，从而可以做到其中任何一个流在关闭时，与之关联的所有流都可关闭，简易版观察者模式
+						* 比如 FileInputStream.close() 时，会调用了 FileDescriptor.closeAll(), 它会关闭所有持有它的流对象
+							* 注：FileInputStream 有个构造函数是由外部传递一个 FileDescriptor 对象，就可能有多个 FileInputStream 引用同一个 fd 对象
 								* 当然你不应该自己创建 FileDescriptor 实例，但可以获取 FileInputStream 中的 fd 对象
+				* static native void initIDs()
+					* 源码：OpenJDK - jdk\src\share\native\java\io\FileInputStream.c | jdk\src\solaris\native\java\io\io_util_md.c
+					* 用于初始化 FileInputStream 中 fd 字段的引用 ID，以后根据 ID 和具体的 FileInputStream 实例就可获取对应的 fd 字段引用了
+				* native void open0(String name) / native void close0()
+					* 源码：OpenJDK - jdk\src\share\native\java\io\FileInputStream.c | jdk\src\solaris\native\java\io\io_util_md.c
+					* open0() 的核心就是使用 open64(name) 打开文件（不能是目录），返回的描述符，被设置到 FileInputStream.fd.fd = 整型描述符
+					* close0() 的核心就是关闭文件描述符的 close() 函数
 		* FileOutputStream
 			* 继承
 				* OutputStream
@@ -584,6 +593,7 @@
 		* sun.nio.ch.FileChannelImpl
 			* java.nio.channels.FileChannel
 * 工具类
+	* Scanner
 	* Path
 	* Paths
 	* File
@@ -592,7 +602,6 @@
 	* StreamDecoder
 	* Charset
 	* FileDescriptor
-	* Scanner
 	
 
 ## net框架 - bio
