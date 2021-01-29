@@ -295,7 +295,17 @@
 			* 公共接口
 				* static Instant now()
 					* 获取当前时间戳实例
-					* 底层使用 System.currentTimeMillis() 的 native 方法获取当前毫秒时间戳；时区被设置为 ZoneOffset.UTC
+					* 内部使用 System.currentTimeMillis() 的 native 方法获取当前毫秒时间戳；时区被设置为 ZoneOffset.UTC
+						* static native long currentTimeMillis()
+							* OpenJDK - jdk\src\share\native\java\lang\System.c:currentTimeMillis
+							* OpenJDK - hotspot\src\share\vm\prims\jvm.cpp:JVM_CurrentTimeMillis
+							* OpenJDK - hotspot\src\os\linux\vm\os_linux.cpp:javaTimeMillis()
+								* javaTimeMillis() 的核心就是使用 gettimeofday(&time, NULL) 获取 timeval time，返回毫秒值
+						* static native long nanoTime()
+							* OpenJDK - jdk\src\share\native\java\lang\System.c:nanoTime
+							* OpenJDK - hotspot\src\share\vm\prims\jvm.cpp:JVM_NanoTime
+							* OpenJDK - hotspot\src\os\linux\vm\os_linux.cpp:javaTimeNanos()
+								* javaTimeNanos() 的核心就是使用 clock_gettime(CLOCK_MONOTONIC, &tp) 获取 timespec tp，返回纳秒值
 				* static Instant ofEpochSecond() / static ofEpochMilli()
 					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间点为纪元后所经历的时间
 				* static Instant from(TemporalAccessor temporal) 
@@ -729,6 +739,24 @@ import java.io.*;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.time.LocalDateTime;
+import java.time.Duration;
+
+public class plainBioTest
+{
+	public static void main(String[] args) throws Exception {
+		new Thread(() -> {
+			new PlainBioServer().serve(9090);
+		}).start();
+
+		for (int i = 0; i < 5; i++) {
+			new Thread(() -> {
+				new PlainBioClient().request(9090);
+			}).start();
+		}
+
+		Thread.sleep(Duration.ofDays(1).toMillis());
+	}
+}
 
 // 服务端
 class PlainBioServer {
@@ -803,6 +831,4 @@ class PlainBioClient {
 
 
 ## JDBC 库
-
-
 
