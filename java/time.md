@@ -79,6 +79,17 @@
 	* ChronoUnit
 	* ZoneId
 		* ZoneId.getAvailableZoneIds()
+	* TimeZone
+		* 时区设置
+			* 1. 代码指定
+				* TimeZone.setDefault(TimeZone.getTimeZone("GTM+8"))
+			* 2. JVM 参数指定
+				* -Duser.timezone=Asia/Shanghai
+			* 3. 环境变量指定
+				* export TZ=Asia/Shanghai
+			* 4. 修改系统时区指定
+				* mv /etc/localtime /etc/localtime.backup
+				* ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 	* DateTimeFormatter
 		* DateTimeFormatter.ISO_DATE
 		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
