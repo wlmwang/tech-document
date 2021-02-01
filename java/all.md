@@ -2,7 +2,8 @@
 
 ## 说明
 * 文档针对 JDK 8 源码进行解析
-	* OpenJDK - https://github.com/openjdk/jdk
+	* OpenJDK - https://openjdk.java.net/projects/jdk/
+		* http://www.java.net/download/openjdk/jdk8/promoted/b132/openjdk-8-src-b132-03_mar_2014.zip
 * 文档伴随源码食用，效果最佳
 
 
@@ -295,22 +296,10 @@
 			* 公共接口
 				* static Instant now()
 					* 获取当前时间戳实例
-					* 内部使用 System.currentTimeMillis() 的 native 方法获取当前毫秒时间戳；时区被设置为 ZoneOffset.UTC
-						* static native long currentTimeMillis()
-							* jdk/src/java.base/share/native/libjava/System.c:currentTimeMillis()
-							* jdk/src/hotspot/share/prims/jvm.cpp:JVM_CurrentTimeMillis
-							* jdk/src/hotspot/os/linux/os_linux.cpp:os::javaTimeMillis()
-								* javaTimeMillis() 的核心就是使用 gettimeofday(&time, NULL) 获取 timeval time，返回毫秒值
-									* 注：gettimeofday() 没有使用时区
-						* static native long nanoTime()
-							* jdk/src/java.base/share/native/libjava/System.c:nanoTime()
-							* jdk/src/hotspot/share/prims/jvm.cpp:JVM_NanoTime
-							* jdk/src/hotspot/os/linux/os_linux.cpp:os::javaTimeNanos()
-								* javaTimeNanos() 的核心就是使用 clock_gettime(CLOCK_MONOTONIC, &tp) 获取 timespec tp，返回纳秒值
-									* 不支持 CLOCK_MONOTONIC 的系统上，使用 gettimeofday(&time, NULL) 获取 timeval time，返回纳秒值
+					* 内部使用 System.currentTimeMillis() 获取当前毫秒时间戳（native 原理请看“工具类”中解析）；时区被设置为 ZoneOffset.UTC
 				* static Instant ofEpochSecond() / static ofEpochMilli()
 					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间点为纪元后所经历的时间
-				* static Instant from(TemporalAccessor temporal) 
+				* static Instant from(TemporalAccessor temporal)
 					* 根据 temporal 实例创建一个时间戳实例
 				* static Instant parse() 
 					* 根据 IOS 字符串时间创建时间戳实例，比如 "2021-01-27T16:26:00Z"
@@ -373,6 +362,29 @@
 	* DateTimeFormatter
 		* DateTimeFormatter.ISO_DATE
 		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
+	* System
+		* Java 有两个时间测量基础调用 System.currentTimeMillis() / System.nanoTime()
+			* System.currentTimeMillis() 返回自 Unix 纪元年时间（1970-01-01T00:00:00Z）开始经过的毫秒数
+				* 如果计算机没有进行时间同步，那么两个 currentTimeMillis() 比较的结果没有意义；另外，服务集群中的时钟通常无法做到完全同步
+				* 还有，currentTimeMillis() 不能保证返回值是单调递增的。因为，时钟会被人为手动回调，也有可能计算机自动同步让时钟出现了倒退
+			* System.nanoTime() 返回自某一固定但任意的时间点开始经过的纳秒数。典型的为 JVM 启动时间为起点，该时间点在一次 JVM 运行期间保持不变
+				* 因此，即使比较同一台计算机上两个不同 JVM 的 nanoTime() 返回值也毫无意义，更不用说比较不同计算机上的调用结果
+				* 使用场景：可以测量单个 JVM 中两个事件之间经过的时间，但是不能用来比较不同 JVM 中的时间
+		* static native long currentTimeMillis()
+			* jdk/src/share/native/java/lang/System.c:currentTimeMillis()
+			* hotspot/src/share/vm/prims/jvm.cpp:JVM_CurrentTimeMillis
+			* hotspot/src/os/linux/vm/os_linux.cpp:os::javaTimeMillis()
+				* javaTimeMillis() 的核心就是使用 gettimeofday(&time, NULL) 获取 timeval time，返回毫秒值
+					* 注：gettimeofday() 没有使用时区参数
+		* static native long nanoTime()
+			* jdk/src/share/native/java/lang/System.c:nanoTime()
+			* hotspot/src/share/vm/prims/jvm.cpp:JVM_NanoTime
+			* hotspot/src/os/linux/vm/os_linux.cpp:os::javaTimeNanos()
+				* javaTimeNanos() 的核心就是使用 clock_gettime(CLOCK_MONOTONIC, &tp) 获取 timespec tp，返回纳秒值
+					* 不支持 CLOCK_MONOTONIC 单调时钟的系统上，使用 gettimeofday(&time, NULL) 获取 timeval time，返回纳秒值
+					* 通常情况下，现代 Linux 发行版都支持了单调时钟
+		* 注：clock_gettime()/gettimeofday() 在 Linux 中都提供了快捷调用，它们会尽量避免实际的系统调用（无需用户态到内核态的切换），仅仅是内存地址跳转
+			* 这种快捷方式，称为 vDSO 虚拟动态共享对象。本质是导出一些函数，把它们映射到进程的地址空间中。用户进程可以像普通共享库中的普通函数一样调用
 
 
 ## io框架 - bio
@@ -404,29 +416,29 @@
 				* 非线程安全，不提供 mark()/reset() 的支持；直接 IO 支持，底层的 flush() 为空操作
 				* FileInputStream.fd 字段是一个 FileDescriptor 类型的对象，它是 Java 虚拟机用来对文件定位的。对它的解析请看下面“工具类”一段
 				* static native void initIDs()
-					* jdk/src/java.base/share/native/libjava/FileInputStream.c:Java_java_io_FileInputStream_initIDs()
-						* 用于初始化 FileInputStream 中 fd 字段偏移，之后可根据该偏移和 FileInputStream 实例获取 fd 字段的引用
+					* jdk/src/share/native/java/io/FileInputStream.c:Java_java_io_FileInputStream_initIDs()
+						* 用于初始化 FileInputStream 中 fd 字段偏移量，之后可根据该偏移量和 FileInputStream 实例获取 fd 字段的引用
 				* native void open0(String path)
-					* jdk/src/java.base/share/native/libjava/FileInputStream.c:Java_java_io_FileInputStream_open0()
-					* jdk/src/java.base/unix/native/libjava/io_util_md.c:fileOpen()
-					* jdk/src/java.base/unix/native/libjava/io_util_md.c:handleOpen()
+					* jdk/src/share/native/java/io/FileInputStream.c:Java_java_io_FileInputStream_open0()
+					* jdk/src/solaris/native/java/io/io_util_md.c:fileOpen()
+					* jdk/src/solaris/native/java/io/io_util_md.c:handleOpen()
 						* open0() 的核心就是使用 open64(path, O_RDONLY, 0666) 打开文件，返回的描述符被设置到 FileInputStream.fd.fd 字段上
 				* native long skip0(long n)
-					* jdk/src/java.base/share/native/libjava/FileInputStream.c:Java_java_io_FileInputStream_skip0()
-					* jdk/src/java.base/unix/native/libjava/io_util_md.c:IO_Lseek
-						* skip0() 的核心就是获取 FileInputStream.fd.fd 并使用 lseek64() 设置偏移量
+					* jdk/src/share/native/java/io/FileInputStream.c:Java_java_io_FileInputStream_skip0()
+					* jdk/src/solaris/native/java/io/io_util_md.h:IO_Lseek
+						* skip0() 的核心就是获取 FileInputStream.fd.fd 并使用 lseek64() 设置文件偏移量
 				* native int read0() / native int readBytes(byte b[], int off, int len)
-					* jdk/src/java.base/share/native/libjava/FileInputStream.c:Java_java_io_FileInputStream_read0()
-					* jdk/src/java.base/share/native/libjava/FileInputStream.c:Java_java_io_FileInputStream_readBytes()
-					* jdk/src/java.base/share/native/libjava/io_util.c:readSingle()
-					* jdk/src/java.base/share/native/libjava/io_util.c:readBytes()
-					* jdk/src/java.base/unix/native/libjava/io_util_md.h:IO_Read
-					* jdk/src/java.base/unix/native/libjava/io_util_md.c:handleRead()
+					* jdk/src/share/native/java/io/FileInputStream.c:Java_java_io_FileInputStream_read0()
+					* jdk/src/share/native/java/io/FileInputStream.c:Java_java_io_FileInputStream_readBytes()
+					* jdk/src/share/native/java/io/io_util.c:readSingle()
+					* jdk/src/share/native/java/io/io_util.c:readBytes()
+					* jdk/src/solaris/native/java/io/io_util_md.h:IO_Read
+					* jdk/src/solaris/native/java/io/io_util_md.c:handleRead()
 						* 核心就是获取 FileInputStream.fd.fd 并使用 read(fd, buf, len) 读取数据，返回读取字节数，若为 0，则表示已经读取到流末尾
 				* native int available0()
-					* jdk/src/java.base/share/native/libjava/FileInputStream.c:Java_java_io_FileInputStream_available0()
-					* jdk/src/java.base/unix/native/libjava/io_util_md.h:IO_Available
-					* jdk/src/java.base/unix/native/libjava/io_util_md.c:handleAvailable()
+					* jdk/src/share/native/java/io/FileInputStream.c:Java_java_io_FileInputStream_available0()
+					* jdk/src/solaris/native/java/io/io_util_md.h:IO_Available
+					* jdk/src/solaris/native/java/io/io_util_md.c:handleAvailable()
 						* 核心就是获取 FileInputStream.fd.fd ，然后区分 fd 的类型，分别如下处理：
 							* 如果是常规的文件，则使用 fstat64() 获取总字节数，减去使用 lseek64() 获取的当前位置偏移量
 							* 如果是 socket、pipe、字符设备等文件，则使用 ioctl 获取接受缓冲区总字节数，减去使用 lseek64() 获取的当前位置偏移量
@@ -442,13 +454,13 @@
 					* 与 FileInputStream 一样，解析请看上文。其中 open 使用 O_WRONLY | O_CREAT 模式打开
 						* 注：这里 open0() 有一个 append 参数，底层 open() 函数的 flags 在 append=true 设置为 O_APPEND，否则为 O_TRUNC
 				* native void write(int b, boolean append) / native void writeBytes(byte b[], int off, int len, boolean append)
-					* jdk/src/java.base/share/native/libjava/FileOutputStream_md.c:Java_java_io_FileOutputStream_write()
-					* jdk/src/java.base/share/native/libjava/FileOutputStream_md.c:Java_java_io_FileOutputStream_writeBytes()
-					* jdk/src/java.base/share/native/libjava/io_util.c:writeSingle()
-					* jdk/src/java.base/share/native/libjava/io_util.c:writeBytes()
-					* jdk/src/java.base/unix/native/libjava/io_util_md.h:IO_Append
-					* jdk/src/java.base/unix/native/libjava/io_util_md.h:IO_Write
-					* jdk/src/java.base/unix/native/libjava/io_util_md.c:handleWrite()
+					* jdk/src/solaris/native/java/io/FileOutputStream_md.c:Java_java_io_FileOutputStream_write()
+					* jdk/src/solaris/native/java/io/FileOutputStream_md.c:Java_java_io_FileOutputStream_writeBytes()
+					* jdk/src/share/native/java/io/io_util.c:writeSingle()
+					* jdk/src/share/native/java/io/io_util.c:writeBytes()
+					* jdk/src/solaris/native/java/io/io_util_md.h:IO_Append
+					* jdk/src/solaris/native/java/io/io_util_md.h:IO_Write
+					* jdk/src/solaris/native/java/io/io_util_md.c:handleWrite()
 						* 核心就是获取 FileOutputStream.fd.fd 并使用 write(fd, buf, len) 写入数据，返回写入字节数，若为 -1，表示写入失败
 		* ByteArrayInputStream
 			* 继承
@@ -645,16 +657,16 @@
 					* 具体关联操作请查看上面 FileInputStream 的解析
 		* FileDescriptor.fd 是操作系统中的整型的文件描述符
 		* FileDescriptor.handle 是操作系统用中来操作文件资源的句柄
-			* jdk/src/java.base/windows/native/libjava/FileDescriptor_md.c:Java_java_io_FileDescriptor_getHandle()
-			* jdk/src/java.base/windows/native/libjava/io_util_md:SET_HANDLE
+			* jdk/src/windows/native/java/io/FileDescriptor_md.c:Java_java_io_FileDescriptor_set()
+			* jdk/src/windows/native/java/io/io_util_md.h:SET_HANDLE
 			* 目前只在 windows 下使用，并只有 FileDescriptor.in/out/err 获取标准 IO 资源
 				* 在 solaris 上 handle 为 -1
 		* static native void initIDs()
-			* jdk/src/java.base/unix/native/libjava/FileDescriptor_md.c:Java_java_io_FileDescriptor_initIDs()
+			* jdk/src/solaris/native/java/io/FileDescriptor_md.c:Java_java_io_FileDescriptor_initIDs()
 				* 用于初始化 FileDescriptor 中 fd 字段偏移，之后可根据该偏移和 FileDescriptor 实例获取 fd 字段的引用
 		* native void close0()
-			* jdk/src/java.base/unix/native/libjava/FileDescriptor_md.c:Java_java_io_FileDescriptor_close0()
-			* jdk/src/java.base/unix/native/libjava/io_util_md.c:fileDescriptorClose()
+			* jdk/src/windows/native/java/io/FileDescriptor_md.c:Java_java_io_FileDescriptor_close0()
+			* jdk/src/solaris/native/java/io/io_util_md.c:fileDescriptorClose()
 				* close0() 的核心就是获取 FileDescriptor.fd 并使用 close() 关闭该文件描述符，并将其值设置为 -1
 				* 注：如果是标准输入流0，标准输出流1，标准错误流2，则不关闭他们，而是将其重定向到 /dev/null，使用 dup2()
 
