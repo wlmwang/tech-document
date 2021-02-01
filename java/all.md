@@ -54,9 +54,7 @@
 				* `c.toArray might (incorrectly) not return Object[] (see 6260652)` 源码中的这条注释针对的是
 					* Arrays.asList() 创建的列表（java.util.Arrays.ArrayList），其 c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
 				* 代码中很多地方都调用了：Arrays.copyOf(original, newLength, newType) / Arrays.copyOf(original, newLength)
-					* 作用是：总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中
-						* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，用来创建一个 componentType[length] 类型数组
-						* 拷贝数组内存数据使用的是 System.arraycopy()，它是一个 native 方法，底层使用 memmove()，即，按字节拷贝
+					* 作用是：总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中。底层原理请看“工具类”中的解析
 				* clone() 时，底层使用的 Object[] 数组会被自动拷贝，即，新建后复制，是按字节拷贝
 				* AbstractList.SubList 是内部类，但它还是使用 parent 字段去引用父列表，主要是为实现 SubList 递归生成子列表的功能
 				* AbstractList.ArrayListSpliterator 分隔迭代器，主要用来支持集合流的特性
@@ -157,8 +155,15 @@
 			* 二分查找算法，要求数据源已排序，各种重载版本
 		* copyOf()/copyOf()
 			* 总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中
-				* 更底层调用了 native 方法 Array.newArray，它由 JVM 实现，用来创建一个 componentType[length] 类型数组
-				* 拷贝数组内存数据使用的是 System.arraycopy()，它是一个 native 方法，底层使用 memmove()，即，按字节拷贝
+				* 拷贝数组内存数据使用的是 System.arraycopy()
+				* static native void arraycopy(Object src, int srcPos, Object dest, int destPos, int length)
+					* jdk/src/share/native/java/lang/System.c:arraycopy()
+					* hotspot/src/share/vm/prims/jvm.cpp:JVM_ArrayCopy
+					* hotspot/src/share/vm/oops/objArrayKlass.cpp:copy_array() -> do_copy()
+					* hotspot/src/share/vm/utilities/copy.hpp:conjoint_oops_atomic()
+					* hotspot/src/os_cpu/solaris_x86/vm/copy_solaris_x86.inline.hpp:pd_conjoint_jints_atomic()
+					* hotspot/src/cpu/zero/vm/copy_zero.hpp:_Copy_conjoint_jints_atomic()
+						* 核心就是使用循环，逐个复制 src 数据到 dst 内存中
 		* stream()
 			* 返回基于数组参数构建的集合流，各种重载版本
 		* equals()/hashCode()/toString()/fill()
@@ -296,7 +301,7 @@
 			* 公共接口
 				* static Instant now()
 					* 获取当前时间戳实例
-					* 内部使用 System.currentTimeMillis() 获取当前毫秒时间戳（native 原理请看“工具类”中解析）；时区被设置为 ZoneOffset.UTC
+					* 内部使用 System.currentTimeMillis() 获取当前毫秒时间戳（native 原理请看“工具类”中解析）；时区为 ZoneOffset.UTC
 				* static Instant ofEpochSecond() / static ofEpochMilli()
 					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间点为纪元后所经历的时间
 				* static Instant from(TemporalAccessor temporal)
