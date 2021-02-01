@@ -1,26 +1,28 @@
 # 时间框架 - time
 * 基础组件
 	* 接口
-		* Temporal
+		* Temporal - TemporalAccessor
 		* TemporalAdjuster
+		* Comparable<Instant>
+		* Serializable
 		* TemporalUnit
 		* ChronoLocalDate
 		* ChronoZonedDateTime
 		* 特性
-			* Temporal - 定义了如何读取和操纵以时间建模的对象的值
-			* TemporalAdjuster - 用更精细的方式操纵日期，不再局限于一次只能改变它的一个值，并且还可按照需求定义自己的日期转换器
+			* Temporal - 定义了如何读取和操纵以时间戳建模的对象的值，比如 Instant, LocalDate, LocalDateTime, LocalTime, OffsetTime etc.
+			* TemporalAdjuster - 用更精细的方式操纵日期，不再局限于一次改变一个值，并且还可按照需求定义自己的日期转换器
 	* 实现
 		* Instant
-			* 不可变对象，代表时间线上的一个瞬时点（时间戳），该瞬间点精确到纳秒分辨率，底层使用 long 存储秒、int 存储纳秒
-				* 时间戳：典型的以 Unix 纪元年时间（1970-01-01T00:00:00Z）开始所经历的秒数进行建模
+			* 不可变对象，代表时间线上的一个瞬时点（时间戳），该瞬间点精确到纳秒分辨率。底层使用 long 存储秒、int 存储纳秒
+				* 典型的以 Unix 纪元年时间（1970-01-01T00:00:00Z）开始所经历的秒数进行建模
 			* 公共接口
 				* static Instant now()
-					* 获取当前时间戳实例
-					* 内部使用 System.currentTimeMillis() 获取当前毫秒时间戳（native 原理请看“工具类”中解析）；时区为 ZoneOffset.UTC
+					* 获取当前时间戳实例；时区为 ZoneOffset.UTC
+					* 内部使用 System.currentTimeMillis() 获取当前毫秒时间戳（native 方法请看“工具类”中解析）
 				* static Instant ofEpochSecond() / static ofEpochMilli()
-					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间点为纪元后所经历的时间
+					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间代表的是纪元后所经历的时间
 				* static Instant from(TemporalAccessor temporal)
-					* 根据 temporal 实例创建一个时间戳实例
+					* 根据 temporal 实例创建一个时间戳实例，比如 Instant,LocalDate,LocalDateTime,LocalTime,Month,ZoneOffset 等等
 				* static Instant parse() 
 					* 根据 IOS 字符串时间创建时间戳实例，比如 "2021-01-27T16:26:00Z"
 				* boolean isSupported(TemporalField field)
@@ -77,6 +79,9 @@
 	* Clock.TickClock
 	* ChronoField
 	* ChronoUnit
+	* ZoneOffset
+		* 一个以 Greenwich/UTC 偏移建模的时区对象，它继承了 ZoneId 类
+		* ZoneOffset.ofHours(8), ZoneOffset.of("+08:00") 效果等同于 ZoneId.of("+08:00") 或 TimeZone.getTimeZone("GTM+08:00").toZoneId()
 	* ZoneId
 		* ZoneId.getAvailableZoneIds()
 	* TimeZone
@@ -116,4 +121,4 @@
 					* 通常情况下，现代 Linux 发行版都支持了单调时钟
 		* 注：clock_gettime()/gettimeofday() 在 Linux 中都提供了快捷调用，它们会尽量避免实际的系统调用（无需用户态到内核态的切换），仅仅是内存地址跳转
 			* 这种快捷方式，称为 vDSO 虚拟动态共享对象。本质是导出一些函数，把它们映射到进程的地址空间中。用户进程可以像普通共享库中的普通函数一样调用
-
+	* CharSequence
