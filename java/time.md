@@ -108,6 +108,7 @@
 		* 时区设置
 			* 1. 代码指定
 				* TimeZone.setDefault(TimeZone.getTimeZone("GMT+08"))
+				* TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
 			* 2. JVM 参数指定
 				* -Duser.timezone=Asia/Shanghai
 			* 3. 环境变量指定
@@ -118,12 +119,16 @@
 	* java.time.zone.ZoneRules
 		* 定义区域偏移量在单个时区中如何变化的规则，该规则模拟了时区的所有历史和未来过渡
 	* java.time.format.DateTimeFormatter
-		* DateTimeFormatter.ISO_DATE
-		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
 		* 用来指定格式化时间，比如：
-			* LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
-			* LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
 			* LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss SSS"));
+			* LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
+			* LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))	// DateTimeFormatter.ISO_DATE
+			* LocalDate.parse("2021-01-27 19:29:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+		* java.text.SimpleDateFormat
+			* 由于 SimpleDateFormat.format()/parse() 方法在执行过程中，会使用一个成员变量 calendar 来保存时间，所以它是非线程安全的
+				* String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date())
+				* java.util.Date datetime new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2021-01-27 19:40:00");
+					* java.util.Date 是一个可变类，非线程安全的
 	* java.time.temporal.ValueRange
 		* 日期时间字段的有效值范围。所有 TemporalField 实例都具有有效的值范围。例如，ISO dayOfMonth 从 1-28或者31 之间的某个数字
 	* java.lang.System
