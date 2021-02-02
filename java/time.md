@@ -5,12 +5,29 @@
 		* TemporalAdjuster
 		* Comparable<Instant>
 		* Serializable
+		* TemporalField
 		* TemporalUnit
-		* ChronoLocalDate
+		* TemporalAmount
+		* ChronoPeriod
+		* ChronoLocalDateTime
 		* ChronoZonedDateTime
 		* 特性
-			* Temporal - 定义了如何读取和操纵以时间戳建模的对象的值，比如 Instant, LocalDate, LocalDateTime, LocalTime, OffsetTime etc.
-			* TemporalAdjuster - 用更精细的方式操纵日期，不再局限于一次改变一个值，并且还可按照需求定义自己的日期转换器
+			* Temporal - 定义了如何读取和操纵以时间戳建模的值，比如 Instant,LocalDate,LocalDateTime,LocalTime,OffsetTime, etc.
+			* TemporalAdjuster - 用更精细的方式操纵日期，不再局限于一次改变一个字段
+			* TemporalField - 定义 Temporal 时间类的字段的类别，比如 NANO_OF_SECOND, NANO_OF_DAY, MICRO_OF_SECOND, etc.
+				* ChronoField, java.time.temporal.IsoFields 实现了该接口
+					* Instant.now().get(ChronoField.NANO_OF_SECOND)  - 获取当前时间的纳秒值（直接获取纳秒字段）
+					* Instant.now().get(ChronoField.MICRO_OF_SECOND)  - 获取当前时间的微妙值（用纳秒字段算出微妙）
+			* TemporalUnit - 一般用来指定一个时间量的单位，比如 NANOS, MICROS, SECONDS, etc.
+				* ChronoUnit, java.time.temporal.IsoFields.Unit 实现了该接口
+					* Instant.now().plus(7, ChronoUnit.DAYS) - 获取当前时间 1 星期后的时间戳实例
+					* Instant.now().until(Instant.now().plusMillis(1000), ChronoUnit.SECONDS) - 获取 1 秒后时间戳与当前时间戳差值
+			* TemporalAmount - 表示一段时间 “1天/2小时/30分钟” 等，可用于日期和时间的加减
+				* Duration, Period 实现了该接口
+			* ChronoPeriod - ISO-8601 日历系统中的日期时间，例如 “2年3个月4天” 等
+				* Period 实现了该接口
+			* ChronoLocalDateTime - 没有时区信息的日期时间
+			* ChronoZonedDateTime - 带有时区信息的日期时间
 	* 实现
 		* Instant
 			* 不可变对象，代表时间线上的一个瞬时点（时间戳），该瞬间点精确到纳秒分辨率。底层使用 long 存储秒、int 存储纳秒
@@ -20,15 +37,15 @@
 					* 获取当前时间戳实例；时区为 ZoneOffset.UTC
 					* 内部使用 System.currentTimeMillis() 获取当前毫秒时间戳（native 方法请看“工具类”中解析）
 				* static Instant ofEpochSecond() / static ofEpochMilli()
-					* 根据秒、纳秒、毫秒参数创建时间戳实例；参数中的时间代表的是纪元后所经历的时间
+					* 根据秒、纳秒、毫秒参数新建时间戳实例；参数中的时间代表的是纪元后所经历的时间
 				* static Instant from(TemporalAccessor temporal)
-					* 根据 temporal 实例创建一个时间戳实例，比如 Instant,LocalDate,LocalDateTime,LocalTime,Month,ZoneOffset 等等
+					* 根据 temporal 实例新建一个时间戳实例，比如 Instant,LocalDate,LocalDateTime,LocalTime,Month,ZoneOffset 等等
 				* static Instant parse() 
-					* 根据 IOS 字符串时间创建时间戳实例，比如 "2021-01-27T16:26:00Z"
+					* 根据 IOS 字符串时间新建时间戳实例，比如 "2021-01-27T16:26:00Z"
 				* boolean isSupported(TemporalField field)
-					* 检查时间戳是否支持某个时间字段。field 可以是 ChronoField 枚举中的值
+					* 检查时间戳是否支持某个时间字段转换。field 可以是 ChronoField 枚举中的值
 				* boolean isSupported(TemporalUnit unit)
-					* 检查时间戳是否支持某个时间单位。field 可以是 ChronoUnit 枚举中的值
+					* 检查时间戳是否支持某个时间单位转换。field 可以是 ChronoUnit 枚举中的值
 				* Instant with(TemporalField field, long newValue)
 					* 基于当前时间戳返回调整后的时间戳对象，直接指定秒、纳秒、毫秒值。比如：将获取当前时间 100 秒后的时间戳实例：
 						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getEpochSecond() + 100);
@@ -50,22 +67,29 @@
 						* Instant.now().atZone(ZoneOffset.of("+08"));	// ZoneOffset.ofHours(8)
 		* LocalDate
 			* 不可变对象，代表一个日期，它不存储或表示时间或时区。年份范围 [-999,999,999, +999,999,999]，月份范围 [1,12]，日子范围 [1,31]
-			* 它是对日期的描述，可用于生日；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
+			* 它是对日期的描述，可用于生日；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它没有时区
 		* LocalTime
-			* 不可变对象，代表一个时间，纳秒精度；它不存储或表示日期或时区。
-			* 它是在挂钟上看到的当地时间的描述；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
+			* 不可变对象，代表一个时间，纳秒精度；它不存储或表示日期或时区
+			* 它是在挂钟上看到的当地时间的描述；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它没有时区
 		* LocalDateTime
 			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它不存储或表示时区
-			* 它是对日子的描述，如用于生日，结合当地时间在挂钟上看到的；它不能代表时间线上的即时信息，而没有附加信息，如偏移或时区
+			* 它是对日子的描述，如用于生日，结合当地时间在挂钟上看到的；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它没有时区
 		* ZonedDateTime
-			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它在 LocalDateTime 基础上增加了时区信息
-			* 公共接口
-				* ZonedDateTime.parse("2021-01-27T20:02:00.000+08:00")
-					* 从字符串创建 ZonedDateTime
-				* ZonedDateTime.now(zoneId)
-					* 获取其他时区的当前日期和时间
+			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；本质上它是在 LocalDateTime 基础上增加了时区信息而已
 		* Duration
+			* 不可变对象，用于以秒和纳秒为单位测量时间量。一般用着表示两个时间 Temporal 之间的一段时间。比如：获取 1 天时间量的毫秒值
+				* Duration.ofDays(1).toMillis()
+				* Duration.of(1, ChronoUnit.DAYS).toMillis()
+				* Duration.between(Instant.now(), Instant.now().plusMillis(1, ChronoUnit.DAYS)).toMillis()
+				* Duration.between(LocalTime.parse("17:22"), LocalTime.parse("17:23")).toMillis()
+				* Duration.between(LocalDateTime.parse("2021-01-27T00:00:00"), LocalDateTime.parse("2021-01-28T00:00:00")).toMillis()
 		* Period
+			* 不可变对象，用于测量以年，月和日为单位的时间。一般用着表示两个时间 LocalDate 之间的一段时间。比如：获取 1 天时间量的天数
+				* Period.ofDays(1).getDays()
+				* Period.parse("P2021Y01M01D").getDays()
+				* Period.between(LocalDate.parse("2021-01-27"), LocalDate.parse("2021-01-28")).getDays()
+			* 与 Duration 相比，Period 包含年数，月数，天数，而 Duration 只包含秒，纳秒
+			* 注：Period.getDays() 只会获取 days 属性值，而不会将年月部分都计算成天数。想要获取两个时间的天数请使用 Duration.toDays()
 * 工具类
 	* Year
 	* Month
@@ -77,17 +101,16 @@
 	* Clock.FixedClock
 	* Clock.OffsetClock
 	* Clock.TickClock
-	* ChronoField
-	* ChronoUnit
 	* ZoneOffset
 		* 一个以 Greenwich/UTC 偏移建模的时区对象，它继承了 ZoneId 类
-		* ZoneOffset.ofHours(8), ZoneOffset.of("+08:00") 效果等同于 ZoneId.of("+08:00") 或 TimeZone.getTimeZone("GTM+08:00").toZoneId()
+		* ZoneOffset.ofHours(8), ZoneOffset.of("+08:00") 效果等同于 ZoneId.of("+08:00") 或 TimeZone.getTimeZone("GMT+08:00").toZoneId()
 	* ZoneId
+		* 时区ID
 		* ZoneId.getAvailableZoneIds()
 	* TimeZone
 		* 时区设置
 			* 1. 代码指定
-				* TimeZone.setDefault(TimeZone.getTimeZone("GTM+8"))
+				* TimeZone.setDefault(TimeZone.getTimeZone("GMT+08"))
 			* 2. JVM 参数指定
 				* -Duser.timezone=Asia/Shanghai
 			* 3. 环境变量指定
@@ -98,6 +121,8 @@
 	* DateTimeFormatter
 		* DateTimeFormatter.ISO_DATE
 		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
+	* java.time.temporal.ValueRange
+		* 日期时间字段的有效值范围。所有 TemporalField 实例都具有有效的值范围。例如，ISO dayOfMonth 从 1-28或者31 之间的某个数字
 	* System
 		* Java 有两个时间测量基础调用 System.currentTimeMillis() / System.nanoTime()
 			* System.currentTimeMillis() 返回自 Unix 纪元年时间（1970-01-01T00:00:00Z）开始经过的毫秒数
@@ -121,4 +146,4 @@
 					* 通常情况下，现代 Linux 发行版都支持了单调时钟
 		* 注：clock_gettime()/gettimeofday() 在 Linux 中都提供了快捷调用，它们会尽量避免实际的系统调用（无需用户态到内核态的切换），仅仅是内存地址跳转
 			* 这种快捷方式，称为 vDSO 虚拟动态共享对象。本质是导出一些函数，把它们映射到进程的地址空间中。用户进程可以像普通共享库中的普通函数一样调用
-	* CharSequence
+
