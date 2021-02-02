@@ -1,31 +1,29 @@
 # 时间框架 - time
 * 基础组件
 	* 接口
-		* Temporal - TemporalAccessor
-		* TemporalAdjuster
-		* Comparable<Instant>
-		* Serializable
-		* TemporalField
-		* TemporalUnit
-		* TemporalAmount
-		* ChronoPeriod
-		* ChronoLocalDateTime
-		* ChronoZonedDateTime
+		* java.time.temporal.Temporal - java.time.temporal.TemporalAccessor
+		* java.time.temporal.TemporalAdjuster
+		* java.time.temporal.TemporalField
+		* java.time.temporal.TemporalUnit
+		* java.time.temporal.TemporalAmount
+		* java.time.chrono.ChronoPeriod
+		* java.time.chrono.ChronoLocalDateTime
+		* java.time.chrono.ChronoZonedDateTime
 		* 特性
 			* Temporal - 定义了如何读取和操纵以时间戳建模的值，比如 Instant,LocalDate,LocalDateTime,LocalTime,OffsetTime, etc.
 			* TemporalAdjuster - 用更精细的方式操纵日期，不再局限于一次改变一个字段
 			* TemporalField - 定义 Temporal 时间类的字段的类别，比如 NANO_OF_SECOND, NANO_OF_DAY, MICRO_OF_SECOND, etc.
-				* ChronoField, java.time.temporal.IsoFields 实现了该接口
+				* java.time.ChronoField, java.time.temporal.IsoFields 实现了该接口
 					* Instant.now().get(ChronoField.NANO_OF_SECOND)  - 获取当前时间的纳秒值（直接获取纳秒字段）
 					* Instant.now().get(ChronoField.MICRO_OF_SECOND)  - 获取当前时间的微妙值（用纳秒字段算出微妙）
 			* TemporalUnit - 一般用来指定一个时间量的单位，比如 NANOS, MICROS, SECONDS, etc.
-				* ChronoUnit, java.time.temporal.IsoFields.Unit 实现了该接口
+				* java.time.ChronoUnit, java.time.temporal.IsoFields.Unit 实现了该接口
 					* Instant.now().plus(7, ChronoUnit.DAYS) - 获取当前时间 1 星期后的时间戳实例
 					* Instant.now().until(Instant.now().plusMillis(1000), ChronoUnit.SECONDS) - 获取 1 秒后时间戳与当前时间戳差值
 			* TemporalAmount - 表示一段时间 “1天/2小时/30分钟” 等，可用于日期和时间的加减
-				* Duration, Period 实现了该接口
+				* java.time.Duration, java.time.Period 实现了该接口
 			* ChronoPeriod - ISO-8601 日历系统中的日期时间，例如 “2年3个月4天” 等
-				* Period 实现了该接口
+				* java.time.Period 实现了该接口
 			* ChronoLocalDateTime - 没有时区信息的日期时间
 			* ChronoZonedDateTime - 带有时区信息的日期时间
 	* 实现
@@ -96,18 +94,17 @@
 	* DayOfWeek
 	* YearMonth
 	* MonthDay
-	* Clock
 	* Clock.SystemClock
 	* Clock.FixedClock
 	* Clock.OffsetClock
 	* Clock.TickClock
+	* ZoneId
+		* 时区 ID
+		* ZoneId.getAvailableZoneIds() / ZoneId.of("+08:00")
 	* ZoneOffset
 		* 一个以 Greenwich/UTC 偏移建模的时区对象，它继承了 ZoneId 类
 		* ZoneOffset.ofHours(8), ZoneOffset.of("+08:00") 效果等同于 ZoneId.of("+08:00") 或 TimeZone.getTimeZone("GMT+08:00").toZoneId()
-	* ZoneId
-		* 时区ID
-		* ZoneId.getAvailableZoneIds()
-	* TimeZone
+	* java.util.TimeZone
 		* 时区设置
 			* 1. 代码指定
 				* TimeZone.setDefault(TimeZone.getTimeZone("GMT+08"))
@@ -118,12 +115,18 @@
 			* 4. 修改系统时区指定
 				* mv /etc/localtime /etc/localtime.backup
 				* ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-	* DateTimeFormatter
+	* java.time.zone.ZoneRules
+		* 定义区域偏移量在单个时区中如何变化的规则，该规则模拟了时区的所有历史和未来过渡
+	* java.time.format.DateTimeFormatter
 		* DateTimeFormatter.ISO_DATE
 		* DateTimeFormatter.ofPattern("yyyy/MM/dd")
+		* 用来指定格式化时间，比如：
+			* LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
+			* LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+			* LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss SSS"));
 	* java.time.temporal.ValueRange
 		* 日期时间字段的有效值范围。所有 TemporalField 实例都具有有效的值范围。例如，ISO dayOfMonth 从 1-28或者31 之间的某个数字
-	* System
+	* java.lang.System
 		* Java 有两个时间测量基础调用 System.currentTimeMillis() / System.nanoTime()
 			* System.currentTimeMillis() 返回自 Unix 纪元年时间（1970-01-01T00:00:00Z）开始经过的毫秒数
 				* 如果计算机没有进行时间同步，那么两个 currentTimeMillis() 比较的结果没有意义；另外，服务集群中的时钟通常无法做到完全同步
