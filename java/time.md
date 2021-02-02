@@ -51,10 +51,10 @@
 						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getEpochSecond() + 100);
 						* Instant.now().with(TemporalField.INSTANT_SECONDS, Instant.now().getLong(TemporalField.INSTANT_SECONDS) + 100);
 				* Instant plus(long amountToAdd, TemporalUnit unit)
-					* 基于当前时间戳返回调整后的时间戳对象，增加一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期后的时间戳实例：
+					* 基于当前时间戳返回调整后的时间戳对象，增加一个时间增量，单位由 unit 指定。比如：获取当前时间 1 星期后的时间戳实例：
 						* Instant.now().plus(7, ChronoUnit.DAYS);
 				* Instant Instant.minus(long amountToSubtract, TemporalUnit unit)
-					* 基于当前时间戳返回调整后的时间戳对象，减去一个时间增量，可以是秒、纳秒、微妙、毫秒、分钟、小时、天。比如：获取当前时间 1 星期前的时间戳实例：
+					* 基于当前时间戳返回调整后的时间戳对象，减去一个时间增量，单位由 unit 指定。比如：获取当前时间 1 星期前的时间戳实例：
 						* Instant.now().minus(7, ChronoUnit.DAYS);
 					* 注：底层调用实现会将其转换成 Instant.plus(-amountToSubtract, unit);
 				* long until(Temporal endExclusive, TemporalUnit unit)
@@ -67,24 +67,24 @@
 						* Instant.now().atZone(ZoneOffset.of("+08"));	// ZoneOffset.ofHours(8)
 		* LocalDate
 			* 不可变对象，代表一个日期，它不存储或表示时间或时区。年份范围 [-999,999,999, +999,999,999]，月份范围 [1,12]，日子范围 [1,31]
-			* 它是对日期的描述，可用于生日；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它没有时区
+			* 它是对日期的描述，可用于生日；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它不存储时区
 		* LocalTime
 			* 不可变对象，代表一个时间，纳秒精度；它不存储或表示日期或时区
-			* 它是在挂钟上看到的当地时间的描述；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它没有时区
+			* 它是对挂钟上的时间的描述；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它不存储时区
 		* LocalDateTime
 			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；它不存储或表示时区
-			* 它是对日子的描述，如用于生日，结合当地时间在挂钟上看到的；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它没有时区
+			* 它是对日子的描述，可用于生日，结合当地时间在挂钟上看到的；默认使用本地 TZ 时区信息，但它不能代表时间线上的即时信息，因为它不存储时区
 		* ZonedDateTime
-			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；本质上它是在 LocalDateTime 基础上增加了时区信息而已
+			* 不可变对象，代表日期时间，时间表示为纳秒精度，通常被视为年月日时分秒；内部使用 LocalDateTime 与 ZoneOffset/ZoneId 字段描述
 		* Duration
-			* 不可变对象，用于以秒和纳秒为单位测量时间量。一般用着表示两个时间 Temporal 之间的一段时间。比如：获取 1 天时间量的毫秒值
+			* 不可变对象，用于以秒和纳秒为单位测量时间量。一般用来表示两个时间 Temporal 之间的一段时间。比如：获取 1 天时间量的毫秒值
 				* Duration.ofDays(1).toMillis()
 				* Duration.of(1, ChronoUnit.DAYS).toMillis()
 				* Duration.between(Instant.now(), Instant.now().plusMillis(1, ChronoUnit.DAYS)).toMillis()
 				* Duration.between(LocalTime.parse("17:22"), LocalTime.parse("17:23")).toMillis()
 				* Duration.between(LocalDateTime.parse("2021-01-27T00:00:00"), LocalDateTime.parse("2021-01-28T00:00:00")).toMillis()
 		* Period
-			* 不可变对象，用于测量以年，月和日为单位的时间。一般用着表示两个时间 LocalDate 之间的一段时间。比如：获取 1 天时间量的天数
+			* 不可变对象，用于测量以年、月和日为单位的时间。一般用来表示两个日期 LocalDate 之间的一段时间。比如：获取 1 天时间量的天数
 				* Period.ofDays(1).getDays()
 				* Period.parse("P2021Y01M01D").getDays()
 				* Period.between(LocalDate.parse("2021-01-27"), LocalDate.parse("2021-01-28")).getDays()
