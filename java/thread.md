@@ -38,23 +38,17 @@
 	* Linux 把不同的 PID 与系统中每个进程或轻量级进程相关联。另一方面，一个多线程应用程序中的所有线程只有一个相同的 PID
 	* 正因为多个线程有相同的 PID，所以引入了线程组的概念，而一个线程组中的所有线程使用和该线程组的领先进程相同的 PID,也就是该组中第一个轻量级进程的 PID,它被存入进程描述符的tgid字段中
 * java.lang.ThreadLocal
-* java.util.concurrent.locks.ReentrantLock
-* java.util.concurrent.locks.ReentrantReadWriteLock
-* java.util.concurrent.locks.StampedLock
-* java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject - Condition
-* java.util.concurrent.locks.LockSupport
 * java.util.concurrent.atomic.AtomicBoolean, AtomicInteger, AtomicLong
 * java.util.concurrent.atomic.AtomicIntegerArray, AtomicLongArray
 * java.util.concurrent.atomic.AtomicIntegerFieldUpdater<T>, AtomicLongFieldUpdater<T>
 * java.util.concurrent.atomic.AtomicReferenceFieldUpdater<T,V>
 * java.util.concurrent.atomic.AtomicReference<V>, AtomicMarkableReference<V>
 * java.util.concurrent.atomic.AtomicReferenceArray<V>
-* java.util.concurrent.LinkedBlockingQueue<E>
-* java.util.concurrent.LinkedBlockingDeque<E>
-* java.util.concurrent.PriorityBlockingQueue<E>
-* java.util.concurrent.LinkedTransferQueue<E>
-* java.util.concurrent.SynchronousQueue
-* java.util.concurrent.LinkedTransferQueue
+* java.util.concurrent.locks.ReentrantLock
+* java.util.concurrent.locks.ReentrantReadWriteLock
+* java.util.concurrent.locks.StampedLock
+* java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject - Condition
+* java.util.concurrent.locks.LockSupport
 
 ## 关键源码
 
