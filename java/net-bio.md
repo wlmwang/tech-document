@@ -65,21 +65,21 @@
 			* 获取输入、输出实例
 
 ## 工具类
-	* PlainSocketImpl
-		* 是一个代理类，由它代理 DualStackPlainSocketImpl、TwoStacksPlainSocketImpl 两种不同实现
-		* 存在两种实现的原因是一个用于处理 Windows Vista 以下的版本，另一个用于处理 Windows Vista 及以上的版本
-		* unix-like 的实现则不会这么繁琐，它不存在版本的问题，所以它直接由 PlainSocketImpl 类实现
-	* SocksSocketImpl
-		* 是 PlainSocketImpl 的子类；主要是实现了防火墙安全会话转换协议，包括 SOCKS V4 和 V5
-	* SocketImpl
-	* SocketInputStream
-	* SocketOutputStream
+* PlainSocketImpl
+	* 是一个代理类，由它代理 DualStackPlainSocketImpl、TwoStacksPlainSocketImpl 两种不同实现
+	* 存在两种实现的原因是一个用于处理 Windows Vista 以下的版本，另一个用于处理 Windows Vista 及以上的版本
+	* unix-like 的实现则不会这么繁琐，它不存在版本的问题，所以它直接由 PlainSocketImpl 类实现
+* SocksSocketImpl
+	* 是 PlainSocketImpl 的子类；主要是实现了防火墙安全会话转换协议，包括 SOCKS V4 和 V5
+* SocketImpl
+* SocketInputStream
+* SocketOutputStream
 
 ## 关键源码
 
 
-#### 示例
-* 网络编程复杂且细节繁多，短时间内，我没有办法看完并分析所有类，等后续慢慢补充吧。这里写一个经典示例来结束本节
+#### 示例代码
+* 网络编程复杂且细节繁多，短时间内，没有办法看完并分析所有类，等后续慢慢补充吧。这里写一个经典示例来结束本节
 ```java
 import java.io.*;
 import java.net.Socket;

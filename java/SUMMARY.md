@@ -17,7 +17,7 @@
 	* http
 * [线程框架]
 	* [thread](thread.md)
-	* executor
+	* [executor](executor.md)
 	* fork-join
 * [日志框架]
 	* logger

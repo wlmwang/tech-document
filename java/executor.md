@@ -13,14 +13,22 @@
 	* 继承
 		* AbstractExecutorService - ExecutorService - Executor
 	* 解析
-		* 接口
-			* ThreadPoolExecutor(int corePoolSize,int maximumPoolSize,long keepAliveTime,TimeUnit unit,BlockingQueue<Runnable> workQueue)
-				* 当线程池小于 corePoolSize 时，新提交任务将创建一个新线程执行任务，即使此时线程池中存在空闲线程；是预创建线程的意思
+		* 三个构造函数：
+			* ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue)
+			* ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, RejectedExecutionHandler handler)
+			* ThreadPoolExecutor(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue, ThreadFactory threadFactory, RejectedExecutionHandler handler)
+				* 当线程池小于 corePoolSize 时，新提交任务将创建一个新线程执行任务，即使此时线程池中存在空闲线程
 				* 当线程池达到 corePoolSize 时，新提交任务将被放入 workQueue 中，等待线程池中任务调度执行
-				* 当 workQueue 已满，且 maximumPoolSize>corePoolSize 时，新提交任务会创建新线程执行任务
+				* 当 workQueue 已满，且当前线程数小于 maximumPoolSize 时，新提交任务会创建新线程执行任务
 				* 当提交任务数超过 maximumPoolSize 时，新提交任务由 RejectedExecutionHandler 处理；maximumPoolSize 表示最多能创建多少个线程
 				* 当线程池中超过 corePoolSize 线程，空闲时间达到 keepAliveTime 时，将释放空闲线程，直到线程池中的线程数不超过 corePoolSize
 				* 当设置 allowCoreThreadTimeOut(true) 时，线程池中 corePoolSize 线程空闲时间达到 keepAliveTime 也将关闭，直到线程池中的线程数为 0
+		* ThreadPoolExecutor.ctl 字段是一个打包了两个概念字段的原子整数。其中高 3 位存储线程池状态，低 29 位存储线程数量
+			* runStateOf(int c) 指示有效线程数
+			* workerCountOf(int c) 指示线程池状态。是否正在运行、正在关闭等
+			* ThreadPoolExecutor.ctl 初始化时，值为正在运行 ThreadPoolExecutor.RUNNING，0个线程
+		* ThreadPoolExecutor.Worker 为工作线程。其内部 Thread 为非“分离式”线程，即，进程会等待线程池中所有线程结束
+			* ThreadPoolExecutor.Worker.firstTask 字段保存的一般为创建时提交的任务，除此之外，工作线程将从阻塞队列中获取任务来执行
 * java.uitl.concurrent.ThreadPoolExecutor.AbortPolicy
 	* 继承
 		* RejectedExecutionHandler
@@ -41,21 +49,19 @@
 * java.util.concurrent.Executors
 	* static ExecutorService newFixedThreadPool(int nThreads)
 		* 特性
-			* 创建固定大小的线程池
+			* 创建固定大小的线程池 ThreadPoolExecutor
+				* 核心线程数量与最大线程数量相同 ThreadPoolExecutor.corePoolSize == ThreadPoolExecutor.maximumPoolSize
+				* 每个线程的存活时间是无限的 ThreadPoolExecutor.keepAliveTime == 0
+				* 阻塞队列是无界的 LinkedBlockingQueue<Runnable>，如果池中的所有线程均在繁忙状态，新任务会进入阻塞队列中
 			* 每次提交一个任务就创建一个线程，直到线程达到线程池的最大大小
-			* 线程池的大小一旦达到最大值就会保持不变，如果某个线程因为执行异常而结束，那么线程池会补充一个新线程
-		* 描述
-			* 创建可容纳固定数量线程的池子，每个线程的存活时间是无限的，当池子满了就不再添加线程了；如果池中的所有线程均在繁忙状态，
-			* 对于新任务会进入阻塞队列中（无界的阻塞队列）
-		* 解析
-			* 一般如果线程池任务队列采用 LinkedBlockingQueue 队列的话，那么不会拒绝任何任务（因为其大小为 Integer.MAX_VALUE）
-			* 这种情况下，ThreadPoolExecutor 最多仅会按照最小线程数 corePoolSize 来创建线程，也就是说线程池大小被忽略了
+				* 由于是无界队列，线程池最多创建 corePoolSize 个线程，maximumPoolSize 被忽略
+				* 线程池的大小一旦达到最大值就会保持不变，如果某个线程因为执行异常而结束，那么线程池会补充一个新线程
 	* static ExecutorService newCachedThreadPool()
 		* 特性
-			* 创建一个可缓存的线程池
+			* 创建一个可缓存的线程池 ThreadPoolExecutor
 			* 如果线程池的大小超过了处理任务所需要的线程，那么就会回收部分空闲（60秒不执行任务）的线程
 			* 当任务数增加时，此线程池又可以智能的添加新线程来处理任务
-			* 此线程池不会对线程池大小做限制，线程池大小完全依赖于操作系统（或者说JVM）能够创建的最大线程大小
+			* 此线程池不会对线程池大小做限制，线程池大小完全依赖于操作系统（或者说 JVM）能够创建的最大线程大小
 		* 描述
 			* 当有新任务到来，则插入到 SynchronousQueue 中，由于 SynchronousQueue 是同步队列，因此会在池中寻找可用线程来执行，
 			* 若有可以线程则执行，若没有可用线程则创建一个线程来执行该任务；若池中线程空闲时间超过指定时间，则该线程会被销毁
