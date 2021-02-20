@@ -2,10 +2,13 @@
 
 ## 基础容器
 #### 接口
+* Collection
+* Collection - Iterable
 * List - Collection
 * Deque - Queue - Collection
-* Collection - Iterable
 * RandomAccess
+* Set
+* SortedSet - Set
 * NavigableSet - SortedSet - Set
 * Iterator
 * 特性
@@ -16,11 +19,11 @@
 		* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
 		* PriorityQueue 底层是最小堆，需实现 Comparable<T> 接口，当然也可以传入比较器
 		* Deque 是双端队列
-	* Set - 代表无序不可重复集合，只能根据元素本身来访问
+	* Set - 代表无序不可重复集，只能根据元素本身来访问
 		* 依赖 equals(), hashCode()。通常情况下，你应该重新定义这两个接口的实现
-	* SortedSet - 代表有序不可重复集合
+	* SortedSet - 代表有序不可重复集
 		* 除依赖 equals(), hashCode() 外，还依赖 compareTo()。通常情况下，你应该重新定义这三个接口的实现
-	* NavigableSet - SortedSet 的子接口，增加了范围查找、降序 Set，以及增强的获取的部分 Set 方法
+	* NavigableSet - 增强了范围查找。比如：获取（并删除）最小值、最大值；大于（等于）某个key的最小值；小于（等于）某个key的最大值等
 	* Iterator - 本质上，迭代器的工作是辅助具体的容器进行访问索引的自动化管理，它不持有实际的数据
 
 #### 实现
@@ -101,10 +104,19 @@
 		* Cloneable
 		* Serializable
 	* 解析
-		* 可高效的进行访问的散列结构，底层使用 HashMap 容器，详细说明请看 HashMap 描述
+		* 可高效的进行访问的散列结构的无序集，底层使用 HashMap 容器，详细说明请看 HashMap 描述
 		* 集容器的元素，被保存至 HashMap<E, Object> 映射表的键中，值是一个“无用”的常量 PRESENT = new Object()
 		* 迭代器返回的是 HashMap<E, Object> 的键视图
 * TreeSet
+	* 继承
+		* AbstractSet
+		* NavigableSet
+		* Cloneable
+		* Serializable
+	* 解析
+		* 可高效的进行访问的查找树结构的有序集，底层使用 TreeMap 容器，详细说明请看 TreeMap 描述
+		* 集容器的元素，被保存至 TreeMap<E, Object> 红黑树的键中，值是一个“无用”的常量 PRESENT = new Object()
+		* 迭代器返回的是 TreeMap<E, Object> 的键视图
 * LinkedHashSet
 
 ## 迭代器
@@ -179,15 +191,10 @@
 			* 默认构造，使用 this 对象锁作用同步锁
 			* 底层将源 Set<E>|SortedSet<E> 方法包装一层 synchronized (mutex){...} 来达到线程安全
 		* 注：如果使用迭代器，必须由使用人员自行添加同步手段
-	* synchronizedCollection()
+	* synchronizedCollection(Collection<T> c)/synchronizedCollection(Collection<T> c, Object mutex)
 		* 将非线程安全的 Collection 集合转换为线程安全的
 		* synchronizedList/synchronizedSet/... 的父类。算法思想一致
 		* 注：如果使用迭代器，必须由使用人员自行添加同步手段
-	* synchronizedMap()
-		* 将非线程安全的 Map 集合转换为线程安全的
-		* 算法思想与 synchronizedList/synchronizedSet 没有本质区别。
-			* 不过，相比集合，Map有视图，会返回线程安全版本，即 SynchronizedSet/SynchronizedCollection
-		* 注：一般我们不使用这种封装的线程安全 Map 映射，而使用性能更好的 ConcurrentHashMap
 
 ## 关键源码
 * java.util.ArrayList<E>
