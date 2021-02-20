@@ -120,28 +120,28 @@
 		* mv /etc/localtime /etc/localtime.backup
 		* ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 * java.time.zone.ZoneRules
-* 定义区域偏移量在单个时区中如何变化的规则，该规则模拟了时区的所有历史和未来过渡
+	* 定义区域偏移量在单个时区中如何变化的规则，该规则模拟了时区的所有历史和未来过渡
 * java.time.format.DateTimeFormatter
-* 用来指定格式化时间，比如：
-	* LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss SSS"));
-	* LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
-	* LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))	// DateTimeFormatter.ISO_DATE
-	* LocalDate.parse("2021-01-27 19:29:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+	* 用来指定格式化时间，比如：
+		* LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss SSS"));
+		* LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"))
+		* LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))	// DateTimeFormatter.ISO_DATE
+		* LocalDate.parse("2021-01-27 19:29:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 * java.text.SimpleDateFormat
 	* 由于 SimpleDateFormat.format()/parse() 方法在执行过程中，会使用一个成员变量 calendar 来保存时间，所以它是非线程安全的
 		* String datetime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date())
 		* java.util.Date datetime new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2021-01-27 19:40:00");
 			* java.util.Date 是一个可变类，非线程安全的
 * java.time.temporal.ValueRange
-* 日期时间字段的有效值范围。所有 TemporalField 实例都具有有效的值范围。例如，ISO dayOfMonth 从 1-28或者31 之间的某个数字
+	* 日期时间字段的有效值范围。所有 TemporalField 实例都具有有效的值范围。例如，ISO dayOfMonth 从 1-28或者31 之间的某个数字
 * java.lang.System
-* Java 有两个时间测量基础调用 System.currentTimeMillis() / System.nanoTime()
-	* System.currentTimeMillis() 返回自 Unix 纪元年时间（1970-01-01T00:00:00Z）开始经过的毫秒数
-		* 如果计算机没有进行时间同步，那么两个 currentTimeMillis() 比较的结果没有意义；另外，服务集群中的时钟通常无法做到完全同步
-		* 还有，currentTimeMillis() 不能保证返回值是单调递增的。因为，时钟会被人为手动回调，也有可能计算机自动同步让时钟出现了倒退
-	* System.nanoTime() 返回自某一固定但任意的时间点开始经过的纳秒数。典型的为 JVM 启动时间为起点，该时间点在一次 JVM 运行期间保持不变
-		* 因此，即使比较同一台计算机上两个不同 JVM 的 nanoTime() 返回值也毫无意义，更不用说比较不同计算机上的调用结果
-		* 使用场景：可以测量单个 JVM 中两个事件之间经过的时间，但是不能用来比较不同 JVM 中的时间
+	* Java 有两个时间测量基础调用 System.currentTimeMillis() / System.nanoTime()
+		* System.currentTimeMillis() 返回自 Unix 纪元年时间（1970-01-01T00:00:00Z）开始经过的毫秒数
+			* 如果计算机没有进行时间同步，那么两个 currentTimeMillis() 比较的结果没有意义；另外，服务集群中的时钟通常无法做到完全同步
+			* 还有，currentTimeMillis() 不能保证返回值是单调递增的，因为时钟会被人为手动回调，也有可能计算机自动同步让时钟出现了倒退
+		* System.nanoTime() 返回自某一固定但任意的时间点开始经过的纳秒数。典型的为 JVM 启动时间为起点，该时间点在一次 JVM 运行期间保持不变
+			* 因此，即使比较同一台计算机上两个不同 JVM 的 nanoTime() 返回值也毫无意义，更不用说比较不同计算机上的调用结果
+			* 使用场景：可以测量单个 JVM 中两个事件之间经过的时间，但是不能用来比较不同 JVM 中的时间
 * static native long currentTimeMillis()
 	* jdk/src/share/native/java/lang/System.c:currentTimeMillis()
 	* hotspot/src/share/vm/prims/jvm.cpp:JVM_CurrentTimeMillis
