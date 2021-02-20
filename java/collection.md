@@ -204,55 +204,55 @@ public class ArrayList<E> extends AbstractList<E>
 {
 	...
 	transient Object[] elementData;	// 存储容器
-	private int size;				// 元素个数
+	private int size;		// 元素个数
 	
 	// 增
 	public boolean add(E e) {
-        ensureCapacityInternal(size + 1);  // Increments modCount!!
-        elementData[size++] = e;
-        return true;
-    }
+        	ensureCapacityInternal(size + 1);  // Increments modCount!!
+        	elementData[size++] = e;
+        	return true;
+    	}
 	// 删
 	public E remove(int index) {
-        rangeCheck(index);
+		rangeCheck(index);
 
-        modCount++;
-        E oldValue = elementData(index);
+		modCount++;
+		E oldValue = elementData(index);
 
 		// 向前移动一个位置
-        int numMoved = size - index - 1;
-        if (numMoved > 0)
-            System.arraycopy(elementData, index+1, elementData, index,
-                             numMoved);
-        elementData[--size] = null; // clear to let GC do its work
+		int numMoved = size - index - 1;
+		if (numMoved > 0)
+		    System.arraycopy(elementData, index+1, elementData, index,
+				     numMoved);
+		elementData[--size] = null; // clear to let GC do its work
 
-        return oldValue;
-    }
+		return oldValue;
+    	}
 	// 改
 	public E set(int index, E element) {
-        rangeCheck(index);
+		rangeCheck(index);
 
-        E oldValue = elementData(index);
-        elementData[index] = element;
-        return oldValue;
-    }
+		E oldValue = elementData(index);
+		elementData[index] = element;
+		return oldValue;
+    	}
 	// 查
 	@SuppressWarnings("unchecked")
-    E elementData(int index) {
-        return (E) elementData[index];
-    }
+    	E elementData(int index) {
+        	return (E) elementData[index];
+    	}
 	// 转换成数组
 	@SuppressWarnings("unchecked")
-    public <T> T[] toArray(T[] a) {
+    	public <T> T[] toArray(T[] a) {
 		// 参数 a 长度不够时，返回一个新建的数组并复制元素
-        if (a.length < size)
-            // Make a new array of a's runtime type, but my contents:
-            return (T[]) Arrays.copyOf(elementData, size, a.getClass());
-        System.arraycopy(elementData, 0, a, 0, size);
-        if (a.length > size)
-            a[size] = null;
-        return a;
-    }
+		if (a.length < size)
+		    // Make a new array of a's runtime type, but my contents:
+		    return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+		System.arraycopy(elementData, 0, a, 0, size);
+		if (a.length > size)
+		    a[size] = null;
+		return a;
+    	}
 }
 ```
 
@@ -269,100 +269,100 @@ public class LinkedList<E>
 	
 	// 链表中节点结构
 	private static class Node<E> {
-        E item;			// 实际元素
-        Node<E> next;	// 后继节点引用
-        Node<E> prev;	// 前向节点引用
+		E item;		// 实际元素
+		Node<E> next;	// 后继节点引用
+		Node<E> prev;	// 前向节点引用
 
-        Node(Node<E> prev, E element, Node<E> next) {
-            this.item = element;
-            this.next = next;
-            this.prev = prev;
-        }
-    }
+		Node(Node<E> prev, E element, Node<E> next) {
+		    this.item = element;
+		    this.next = next;
+		    this.prev = prev;
+		}
+    	}
 	
 	// 节点插入头部
 	private void linkFirst(E e) {
-        final Node<E> f = first;
-        final Node<E> newNode = new Node<>(null, e, f);
-        first = newNode;
+		final Node<E> f = first;
+		final Node<E> newNode = new Node<>(null, e, f);
+		first = newNode;
 		// 区分是否首次添加元素，更新前向节点引用；后继节点引用创建 newNode 已指定
-        if (f == null)
-            last = newNode;
-        else
-            f.prev = newNode;
-        size++;
-        modCount++;
-    }
+		if (f == null)
+		    last = newNode;
+		else
+		    f.prev = newNode;
+		size++;
+		modCount++;
+    	}
 	// 删除头部节点，返回被删除节点元素值。|f| 一般为 LinkedList.first
 	private E unlinkFirst(Node<E> f) {
-        // assert f == first && f != null;
-        final E element = f.item;
-        final Node<E> next = f.next;
-        f.item = null;
-        f.next = null; // help GC
-		
+		// assert f == first && f != null;
+		final E element = f.item;
+		final Node<E> next = f.next;
+		f.item = null;
+		f.next = null; // help GC
+
 		// 指向头节点下一个节点引用
-        first = next;
-		
+		first = next;
+
 		// 区分链表是否已空，更新（首节点）前向节点为 null
-        if (next == null)
-            last = null;
-        else
-            next.prev = null;
-        size--;
-        modCount++;
-        return element;
-    }
+		if (next == null)
+		    last = null;
+		else
+		    next.prev = null;
+		size--;
+		modCount++;
+		return element;
+    	}
 	// 获取头节点的元素值
 	public E getFirst() {
-        final Node<E> f = first;
-        if (f == null)
-            throw new NoSuchElementException();
-        return f.item;
-    }
+		final Node<E> f = first;
+		if (f == null)
+		    throw new NoSuchElementException();
+		return f.item;
+    	}
 	// 获取指定索引节点的引用
 	Node<E> node(int index) {
-        // assert isElementIndex(index);
-		
+		// assert isElementIndex(index);
+
 		// 区分索引值是否过半，决定从头、尾迭代元素
-        if (index < (size >> 1)) {
-            Node<E> x = first;
-            for (int i = 0; i < index; i++)
-                x = x.next;
-            return x;
-        } else {
-            Node<E> x = last;
-            for (int i = size - 1; i > index; i--)
-                x = x.prev;
-            return x;
-        }
-    }
+		if (index < (size >> 1)) {
+		    Node<E> x = first;
+		    for (int i = 0; i < index; i++)
+			x = x.next;
+		    return x;
+		} else {
+		    Node<E> x = last;
+		    for (int i = size - 1; i > index; i--)
+			x = x.prev;
+		    return x;
+		}
+    	}
 	// 设置指定元素值
 	public E set(int index, E element) {
-        checkElementIndex(index);
+		checkElementIndex(index);
 		// 返回指定索引的元素 Node<E> 引用
-        Node<E> x = node(index);
-        E oldVal = x.item;
-        x.item = element;
-        return oldVal;
-    }
+		Node<E> x = node(index);
+		E oldVal = x.item;
+		x.item = element;
+		return oldVal;
+    	}
 	@SuppressWarnings("unchecked")
-    public <T> T[] toArray(T[] a) {
+    	public <T> T[] toArray(T[] a) {
 		// 参数 a 长度不够时，新建一个数组
-        if (a.length < size)
-            a = (T[])java.lang.reflect.Array.newInstance(
-                                a.getClass().getComponentType(), size);
-        int i = 0;
-        Object[] result = a;
+		if (a.length < size)
+		    a = (T[])java.lang.reflect.Array.newInstance(
+					a.getClass().getComponentType(), size);
+		int i = 0;
+		Object[] result = a;
 		// 迭代赋值
-        for (Node<E> x = first; x != null; x = x.next)
-            result[i++] = x.item;
+		for (Node<E> x = first; x != null; x = x.next)
+		    result[i++] = x.item;
 
-        if (a.length > size)
-            a[size] = null;
+		if (a.length > size)
+		    a[size] = null;
 
-        return a;
-    }
+		return a;
+    	}
 }
 ```
 
@@ -379,127 +379,127 @@ public class PriorityQueue<E> extends AbstractQueue<E>
 	
 	// 增
 	public boolean offer(E e) {
-        if (e == null)
-            throw new NullPointerException();
-        modCount++;
-        int i = size;
+		if (e == null)
+		    throw new NullPointerException();
+		modCount++;
+		int i = size;
 		// 数组容量用完后进行扩容
-        if (i >= queue.length)
-            grow(i + 1);
-        size = i + 1;
-		
+		if (i >= queue.length)
+		    grow(i + 1);
+		size = i + 1;
+
 		// 从底向上迭代二叉树，将 |e| 元素插入到第一个小于 |e| 的根节点的子节点上
 		// 迭代时，将大于 |e| 的根节点移动到遍历路径的子节点上，以便将元素插入到它的根节点上
-        if (i == 0)
-            queue[0] = e;
-        else
-            siftUp(i, e);
-        return true;
-    }
+		if (i == 0)
+		    queue[0] = e;
+		else
+		    siftUp(i, e);
+		return true;
+    	}
 	// 删 - 获取队列中最小的元素
 	// 注：删除首节点，但内存不会被释放
 	@SuppressWarnings("unchecked")
-    public E poll() {
-        if (size == 0)
-            return null;
+    	public E poll() {
+		if (size == 0)
+		    return null;
 		// 队列元素缩小1
-        int s = --size;
-        modCount++;
+		int s = --size;
+		modCount++;
 		// 返回首节点元素
-        E result = (E) queue[0];
+		E result = (E) queue[0];
 		// 将队列尾部的元素提取出来，重新寻找位置插入到最小堆中，用来缩小队列
-        E x = (E) queue[s];
-        queue[s] = null;	// 释放队列尾部元素引用，它会被重新插入到适合的位置
-		
+		E x = (E) queue[s];
+		queue[s] = null;	// 释放队列尾部元素引用，它会被重新插入到适合的位置
+
 		// 从上向下迭代二叉树，将 |x| 元素插入到第一个大于 |x| 的子节点的根节点上
 		// 迭代时，将左、右节点中较小的子节点移动至根节点，并找到第一个大于 |x| 的子节点，以便将元素插入到它的根节点上
-        if (s != 0)
-            siftDown(0, x);
-        return result;
-    }
+		if (s != 0)
+		    siftDown(0, x);
+		return result;
+    	}
 	// 删
 	public boolean remove(Object o) {
-        int i = indexOf(o);
-        if (i == -1)
-            return false;
-        else {
-            removeAt(i);
-            return true;
-        }
-    }
+		int i = indexOf(o);
+		if (i == -1)
+		    return false;
+		else {
+		    removeAt(i);
+		    return true;
+		}
+    	}
 	// 查 - 获取队列中最小的元素
 	// 注：不会删除首节点
 	public E peek() {
-        return (size == 0) ? null : (E) queue[0];
-    }
+        	return (size == 0) ? null : (E) queue[0];
+    	}
 	private int indexOf(Object o) {
-        if (o != null) {
-            for (int i = 0; i < size; i++)
-                if (o.equals(queue[i]))
-                    return i;
-        }
-        return -1;
-    }
+		if (o != null) {
+		    for (int i = 0; i < size; i++)
+			if (o.equals(queue[i]))
+			    return i;
+		}
+		return -1;
+    	}
 	
 	// 从底向上迭代二叉树，将 |x| 元素插入到第一个小于 |x| 的根节点的子节点上
 	// 插入元素时必须保持最小堆特性。|k| 为队列末端索引，|x| 为要插入堆的元素
 	// 任一非终端节点的数据值均不大于其子节点的值；时间复杂度为 O(logn)
 	private void siftUp(int k, E x) {
-        if (comparator != null)
-            siftUpUsingComparator(k, x);
-        else
-            siftUpComparable(k, x);
-    }
+		if (comparator != null)
+		    siftUpUsingComparator(k, x);
+		else
+		    siftUpComparable(k, x);
+    	}
 	@SuppressWarnings("unchecked")
-    private void siftUpComparable(int k, E x) {
-        Comparable<? super E> key = (Comparable<? super E>) x;
-        while (k > 0) {
-			// 获取“根”节点
-            int parent = (k - 1) >>> 1;
-            Object e = queue[parent];
-			// 遍历直到第一个小于 |x| 的根节点
-            if (key.compareTo((E) e) >= 0)
-                break;
-			// 将大于 |x| 的根节点移动到遍历路径的子节点上，以便找到适合的位置直接替换新的元素值
-            queue[k] = e;
-            k = parent;
-        }
+    	private void siftUpComparable(int k, E x) {
+		Comparable<? super E> key = (Comparable<? super E>) x;
+		while (k > 0) {
+		    // 获取“根”节点
+		    int parent = (k - 1) >>> 1;
+		    Object e = queue[parent];
+		    // 遍历直到第一个小于 |x| 的根节点
+		    if (key.compareTo((E) e) >= 0)
+			break;
+		    // 将大于 |x| 的根节点移动到遍历路径的子节点上，以便找到适合的位置直接替换新的元素值
+		    queue[k] = e;
+		    k = parent;
+		}
 		// 找到适合根节点位置来替换新的元素
-        queue[k] = key;
-    }
+		queue[k] = key;
+    	}
 	
 	// 从上向下迭代二叉树，将 |x| 元素插入到第一个大于 |x| 的子节点的根节点上
 	// 迭代时，将左、右节点中较小的子节点移动至根节点，并找到第一个大于 |x| 的子节点，以便将元素插入到它的根节点上
 	// 任一非终端节点的数据值均不大于其子节点的值；时间复杂度为 O(logn)
 	private void siftDown(int k, E x) {
-        if (comparator != null)
-            siftDownUsingComparator(k, x);
-        else
-            siftDownComparable(k, x);
-    }
+		if (comparator != null)
+		    siftDownUsingComparator(k, x);
+		else
+		    siftDownComparable(k, x);
+    	}
 	@SuppressWarnings("unchecked")
-    private void siftDownComparable(int k, E x) {
-        Comparable<? super E> key = (Comparable<? super E>)x;
-        int half = size >>> 1;        // loop while a non-leaf
+    	private void siftDownComparable(int k, E x) {
+		Comparable<? super E> key = (Comparable<? super E>)x;
+		int half = size >>> 1;        // loop while a non-leaf
 		// 二叉树的根节点索引不会低于元素长度的一半。本质上遍历一个二叉树，迭代次数不会多于元素长度的一半
-        while (k < half) {
-			// 获取左、右节点中较小的节点
-            int child = (k << 1) + 1; // assume left child is least
-            Object c = queue[child];
-            int right = child + 1;
-            if (right < size &&
-                ((Comparable<? super E>) c).compareTo((E) queue[right]) > 0)
-                c = queue[child = right];
-			// 遍历直到第一个大于 |x| 的子节点
-            if (key.compareTo((E) c) <= 0)
-                break;
-			// 将左、右节点中较小的子节点移动至根节点
-            queue[k] = c;
-            k = child;
-        }
+		while (k < half) {
+		    // 获取左、右节点中较小的节点
+		    int child = (k << 1) + 1; // assume left child is least
+		    Object c = queue[child];
+		    int right = child + 1;
+		    if (right < size &&
+			((Comparable<? super E>) c).compareTo((E) queue[right]) > 0)
+			c = queue[child = right];
+		    // 遍历直到第一个大于 |x| 的子节点
+		    if (key.compareTo((E) c) <= 0)
+			break;
+		    // 将左、右节点中较小的子节点移动至根节点
+		    queue[k] = c;
+		    k = child;
+		}
 		// 将元素插入到它的根节点上
-        queue[k] = key;
-    }
+		queue[k] = key;
+    	}
 }
 
 ```
@@ -514,21 +514,21 @@ public class HashSet<E>
 	private static final Object PRESENT = new Object();
 	
 	public Iterator<E> iterator() {
-        return map.keySet().iterator();
-    }
+        	return map.keySet().iterator();
+    	}
 	
 	// 增
 	public boolean add(E e) {
-        return map.put(e, PRESENT)==null;
-    }
+        	return map.put(e, PRESENT)==null;
+    	}
 	// 删
 	public boolean remove(Object o) {
-        return map.remove(o)==PRESENT;
-    }
+        	return map.remove(o)==PRESENT;
+    	}
 	// 查
 	public boolean contains(Object o) {
-        return map.containsKey(o);
-    }
+        	return map.containsKey(o);
+    	}
 }
 
 ```
