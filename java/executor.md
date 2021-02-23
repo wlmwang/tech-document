@@ -58,12 +58,7 @@
 	* 继承
 		* RejectedExecutionHandler
 	* 解析
-		* 某人抛出 RejectedExecutionException 异常的拒绝处理器
-* java.uitl.concurrent.ScheduledThreadPoolExecutor
-	* 继承
-		* ThreadPoolExecutor
-	* 解析
-		* ...
+		* 默认抛出 RejectedExecutionException 异常的拒绝处理器
 
 ## 工具类
 * java.util.concurrent.Executors
@@ -108,7 +103,7 @@
 			* 创建一个固定大小的线程池，支持定时及周期性任务执行；当 corePoolSize == 0 时，仅会创建一个线程来执行任务
 				* 每次提交一个任务时，总是会添加至 ScheduledThreadPoolExecutor.DelayedWorkQueue 队列中，并在必要时启动线程以运行它
 					* 我们无法预先启动线程来运行任务，因为该任务可能还不应该运行
-					* DelayedWorkQueue 是一个按照超时时间排序的最小堆优先队列（延时加上当前时间即为超时时间）。此处延时时间都为0，也就是没有延时
+					* DelayedWorkQueue 是一个按照超时时间排序的最小堆优先队列（延时加上当前时间即为超时时间）。execute/submit 延时时间都为0，也就是没有延时
 				* 每个线程的存活时间是无限的 ThreadPoolExecutor.keepAliveTime == 0
 					* 获取任务的方法是一个死循环
 				* ScheduledThreadPoolExecutor.scheduleAtFixedRate() 为周期执行任务接口
@@ -137,7 +132,6 @@ for (int i = 0; i < 10; i++) {
 	});
 }
 
-executor.awaitTermination(50000, TimeUnit.MILLISECONDS);
 executor.shutdown();
 System.out.println("main thread");
 
@@ -168,7 +162,6 @@ for (int i = 0; i < 10; i++) {
 	});
 }
 
-executor.awaitTermination(50000, TimeUnit.MILLISECONDS);
 executor.shutdown();
 System.out.println("main thread");
 
@@ -197,7 +190,6 @@ for (int i = 0; i < 10; i++) {
 	});
 }
 
-executor.awaitTermination(50000, TimeUnit.MILLISECONDS);
 executor.shutdown();
 System.out.println("main thread");
 
