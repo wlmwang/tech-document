@@ -199,7 +199,7 @@
 * java.util.ArrayList<E>
 ```
 public class ArrayList<E> extends AbstractList<E>
-        implements List<E>, RandomAccess, Cloneable, java.io.Serializable
+	implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
 	...
 	transient Object[] elementData;	// 存储容器
@@ -259,14 +259,14 @@ public class ArrayList<E> extends AbstractList<E>
 * java.util.ArrayList<E>
 ```
 public class LinkedList<E>
-    extends AbstractSequentialList<E>
-    implements List<E>, Deque<E>, Cloneable, java.io.Serializable
+	extends AbstractSequentialList<E>
+	implements List<E>, Deque<E>, Cloneable, java.io.Serializable
 {
 	...
 	transient int size = 0;		// 元素个数
 	transient Node<E> first;	// 头节点引用
 	transient Node<E> last;		// 尾节点引用
-	
+
 	// 链表中节点结构
 	private static class Node<E> {
 		E item;		// 实际元素
@@ -274,11 +274,11 @@ public class LinkedList<E>
 		Node<E> prev;	// 前向节点引用
 
 		Node(Node<E> prev, E element, Node<E> next) {
-		    this.item = element;
-		    this.next = next;
-		    this.prev = prev;
+			this.item = element;
+			this.next = next;
+			this.prev = prev;
 		}
-    	}
+	}
 	
 	// 节点插入头部
 	private void linkFirst(E e) {
@@ -287,12 +287,12 @@ public class LinkedList<E>
 		first = newNode;
 		// 区分是否首次添加元素，更新前向节点引用；后继节点引用创建 newNode 已指定
 		if (f == null)
-		    last = newNode;
+			last = newNode;
 		else
-		    f.prev = newNode;
+			f.prev = newNode;
 		size++;
 		modCount++;
-    	}
+	}
 	// 删除头部节点，返回被删除节点元素值。|f| 一般为 LinkedList.first
 	private E unlinkFirst(Node<E> f) {
 		// assert f == first && f != null;
@@ -306,37 +306,37 @@ public class LinkedList<E>
 
 		// 区分链表是否已空，更新（首节点）前向节点为 null
 		if (next == null)
-		    last = null;
+			last = null;
 		else
-		    next.prev = null;
+			next.prev = null;
 		size--;
 		modCount++;
 		return element;
-    	}
+	}
 	// 获取头节点的元素值
 	public E getFirst() {
 		final Node<E> f = first;
 		if (f == null)
-		    throw new NoSuchElementException();
+			throw new NoSuchElementException();
 		return f.item;
-    	}
+	}
 	// 获取指定索引节点的引用
 	Node<E> node(int index) {
 		// assert isElementIndex(index);
 
 		// 区分索引值是否过半，决定从头、尾迭代元素
 		if (index < (size >> 1)) {
-		    Node<E> x = first;
-		    for (int i = 0; i < index; i++)
+			Node<E> x = first;
+			for (int i = 0; i < index; i++)
 			x = x.next;
-		    return x;
+			return x;
 		} else {
-		    Node<E> x = last;
-		    for (int i = size - 1; i > index; i--)
+			Node<E> x = last;
+			for (int i = size - 1; i > index; i--)
 			x = x.prev;
-		    return x;
+			return x;
 		}
-    	}
+	}
 	// 设置指定元素值
 	public E set(int index, E element) {
 		checkElementIndex(index);
@@ -345,24 +345,24 @@ public class LinkedList<E>
 		E oldVal = x.item;
 		x.item = element;
 		return oldVal;
-    	}
+	}
 	@SuppressWarnings("unchecked")
-    	public <T> T[] toArray(T[] a) {
+	public <T> T[] toArray(T[] a) {
 		// 参数 a 长度不够时，新建一个数组
 		if (a.length < size)
-		    a = (T[])java.lang.reflect.Array.newInstance(
-					a.getClass().getComponentType(), size);
+			a = (T[])java.lang.reflect.Array.newInstance(
+				a.getClass().getComponentType(), size);
 		int i = 0;
 		Object[] result = a;
 		// 迭代赋值
 		for (Node<E> x = first; x != null; x = x.next)
-		    result[i++] = x.item;
+			result[i++] = x.item;
 
 		if (a.length > size)
-		    a[size] = null;
+			a[size] = null;
 
 		return a;
-    	}
+	}
 }
 ```
 
@@ -370,7 +370,7 @@ public class LinkedList<E>
 ```
 // 注释中的“根节点”一律代表的是非终端节点（意味着它一定有子节点）；队列的的根节点被称作“首节点”
 public class PriorityQueue<E> extends AbstractQueue<E>
-    implements java.io.Serializable
+	implements java.io.Serializable
 {
 	...
 	transient Object[] queue;	// 队列元素存储容器。首节点一定是最小的（最小堆）
@@ -380,28 +380,28 @@ public class PriorityQueue<E> extends AbstractQueue<E>
 	// 增
 	public boolean offer(E e) {
 		if (e == null)
-		    throw new NullPointerException();
+			throw new NullPointerException();
 		modCount++;
 		int i = size;
 		// 数组容量用完后进行扩容
 		if (i >= queue.length)
-		    grow(i + 1);
+			grow(i + 1);
 		size = i + 1;
 
 		// 从底向上迭代二叉树，将 |e| 元素插入到第一个小于 |e| 的根节点的子节点上
 		// 迭代时，将大于 |e| 的根节点移动到遍历路径的子节点上，以便将元素插入到它的根节点上
 		if (i == 0)
-		    queue[0] = e;
+			queue[0] = e;
 		else
-		    siftUp(i, e);
+			siftUp(i, e);
 		return true;
-    	}
+	}
 	// 删 - 获取队列中最小的元素
 	// 注：删除首节点，但内存不会被释放
 	@SuppressWarnings("unchecked")
-    	public E poll() {
+	public E poll() {
 		if (size == 0)
-		    return null;
+			return null;
 		// 队列元素缩小1
 		int s = --size;
 		modCount++;
@@ -414,92 +414,92 @@ public class PriorityQueue<E> extends AbstractQueue<E>
 		// 从上向下迭代二叉树，将 |x| 元素插入到第一个大于 |x| 的子节点的根节点上
 		// 迭代时，将左、右节点中较小的子节点移动至根节点，并找到第一个大于 |x| 的子节点，以便将元素插入到它的根节点上
 		if (s != 0)
-		    siftDown(0, x);
+			siftDown(0, x);
 		return result;
-    	}
+	}
 	// 删
 	public boolean remove(Object o) {
 		int i = indexOf(o);
 		if (i == -1)
-		    return false;
+			return false;
 		else {
-		    removeAt(i);
-		    return true;
+			removeAt(i);
+			return true;
 		}
-    	}
+	}
 	// 查 - 获取队列中最小的元素
 	// 注：不会删除首节点
 	public E peek() {
-        	return (size == 0) ? null : (E) queue[0];
-    	}
+		return (size == 0) ? null : (E) queue[0];
+	}
 	private int indexOf(Object o) {
 		if (o != null) {
-		    for (int i = 0; i < size; i++)
-			if (o.equals(queue[i]))
-			    return i;
+			for (int i = 0; i < size; i++)
+				if (o.equals(queue[i]))
+					return i;
 		}
 		return -1;
-    	}
+	}
 	
 	// 从底向上迭代二叉树，将 |x| 元素插入到第一个小于 |x| 的根节点的子节点上
 	// 插入元素时必须保持最小堆特性。|k| 为队列末端索引，|x| 为要插入堆的元素
 	// 任一非终端节点的数据值均不大于其子节点的值；时间复杂度为 O(logn)
 	private void siftUp(int k, E x) {
 		if (comparator != null)
-		    siftUpUsingComparator(k, x);
+			siftUpUsingComparator(k, x);
 		else
-		    siftUpComparable(k, x);
-    	}
+			siftUpComparable(k, x);
+	}
 	@SuppressWarnings("unchecked")
-    	private void siftUpComparable(int k, E x) {
+	private void siftUpComparable(int k, E x) {
 		Comparable<? super E> key = (Comparable<? super E>) x;
 		while (k > 0) {
-		    // 获取“根”节点
-		    int parent = (k - 1) >>> 1;
-		    Object e = queue[parent];
-		    // 遍历直到第一个小于 |x| 的根节点
-		    if (key.compareTo((E) e) >= 0)
-			break;
-		    // 将大于 |x| 的根节点移动到遍历路径的子节点上，以便找到适合的位置直接替换新的元素值
-		    queue[k] = e;
-		    k = parent;
+			// 获取“根”节点
+			int parent = (k - 1) >>> 1;
+			Object e = queue[parent];
+			// 遍历直到第一个小于 |x| 的根节点
+			if (key.compareTo((E) e) >= 0)
+				break;
+			// 将大于 |x| 的根节点移动到遍历路径的子节点上，以便找到适合的位置直接替换新的元素值
+			queue[k] = e;
+			k = parent;
 		}
 		// 找到适合根节点位置来替换新的元素
 		queue[k] = key;
-    	}
+	}
 	
 	// 从上向下迭代二叉树，将 |x| 元素插入到第一个大于 |x| 的子节点的根节点上
 	// 迭代时，将左、右节点中较小的子节点移动至根节点，并找到第一个大于 |x| 的子节点，以便将元素插入到它的根节点上
 	// 任一非终端节点的数据值均不大于其子节点的值；时间复杂度为 O(logn)
 	private void siftDown(int k, E x) {
-		if (comparator != null)
-		    siftDownUsingComparator(k, x);
-		else
-		    siftDownComparable(k, x);
-    	}
+	if (comparator != null)
+		siftDownUsingComparator(k, x);
+	else
+		siftDownComparable(k, x);
+	}
 	@SuppressWarnings("unchecked")
-    	private void siftDownComparable(int k, E x) {
+	private void siftDownComparable(int k, E x) {
 		Comparable<? super E> key = (Comparable<? super E>)x;
 		int half = size >>> 1;        // loop while a non-leaf
 		// 二叉树的根节点索引不会低于元素长度的一半。本质上遍历一个二叉树，迭代次数不会多于元素长度的一半
 		while (k < half) {
-		    // 获取左、右节点中较小的节点
-		    int child = (k << 1) + 1; // assume left child is least
-		    Object c = queue[child];
-		    int right = child + 1;
-		    if (right < size &&
-			((Comparable<? super E>) c).compareTo((E) queue[right]) > 0)
-			c = queue[child = right];
-		    // 遍历直到第一个大于 |x| 的子节点
-		    if (key.compareTo((E) c) <= 0)
-			break;
-		    // 将左、右节点中较小的子节点移动至根节点
-		    queue[k] = c;
-		    k = child;
+			// 获取左、右节点中较小的节点
+			int child = (k << 1) + 1; // assume left child is least
+			Object c = queue[child];
+			int right = child + 1;
+			if (right < size &&
+				((Comparable<? super E>) c).compareTo((E) queue[right]) > 0)
+				c = queue[child = right];
+			// 遍历直到第一个大于 |x| 的子节点
+			if (key.compareTo((E) c) <= 0)
+				break;
+			// 将左、右节点中较小的子节点移动至根节点
+			queue[k] = c;
+			k = child;
 		}
 		// 将元素插入到它的根节点上
 		queue[k] = key;
-    	}
+	}
 }
 
 ```
@@ -507,28 +507,27 @@ public class PriorityQueue<E> extends AbstractQueue<E>
 ```
 // 核心逻辑请看 java.util.HashMap<K,V>
 public class HashSet<E>
-    extends AbstractSet<E>
-    implements Set<E>, Cloneable, java.io.Serializable
+	extends AbstractSet<E>
+	implements Set<E>, Cloneable, java.io.Serializable
 {
 	private transient HashMap<E,Object> map;	// 存放容器
 	private static final Object PRESENT = new Object();
-	
+
 	public Iterator<E> iterator() {
-        	return map.keySet().iterator();
-    	}
-	
+		return map.keySet().iterator();
+	}
+
 	// 增
 	public boolean add(E e) {
-        	return map.put(e, PRESENT)==null;
-    	}
+		return map.put(e, PRESENT)==null;
+	}
 	// 删
 	public boolean remove(Object o) {
-        	return map.remove(o)==PRESENT;
-    	}
+		return map.remove(o)==PRESENT;
+	}
 	// 查
 	public boolean contains(Object o) {
-        	return map.containsKey(o);
-    	}
+		return map.containsKey(o);
+	}
 }
-
 ```
