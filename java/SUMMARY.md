@@ -18,8 +18,8 @@
 * [线程框架]
 	* [thread](thread.md)
 	* [executor](executor.md)
-	* [forkJoin](forkjoin.md)
-	* [blockingQueue](blockingqueue.md)
+	* [forkJoin](fork-join.md)
+	* [blockingQueue](blocking-queue.md)
 * [日志框架]
 	* logger
 * [序列化机制]

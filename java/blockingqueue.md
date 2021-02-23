@@ -35,8 +35,21 @@ new Thread(() -> {
 		object = 1;
 		synchronousQueue.put(object);
 		System.out.println("produced {}" + object);
+	} catch (InterruptedException ex) {
+		// ...
+	}
+}).start();
 
+new Thread(() -> {
+	System.out.println("consumer start");
+
+	Integer object;
+	try {
 		object = 2;
+		synchronousQueue.put(object);
+		System.out.println("produced {}" + object);
+
+		object = 3;
 		synchronousQueue.put(object);
 		System.out.println("produced {}" + object);
 	} catch (InterruptedException ex) {
@@ -56,11 +69,25 @@ new Thread(() -> {
 
 		object = synchronousQueue.take();
 		System.out.println("consumed {}" + object);
+
+		object = synchronousQueue.take();
+		System.out.println("consumed {}" + object);
 	} catch (InterruptedException ex) {
 		// ...
 	}
 }).start();
 
-Thread.sleep(Duration.ofDays(1).toMillis());
+Thread.sleep(Duration.ofSeconds(5).toMillis());
+
+Output:
+consumer start
+consumer start
+producer start
+consumed {}2
+produced {}2
+consumed {}3
+produced {}3
+produced {}1
+consumed {}1
 ```
 

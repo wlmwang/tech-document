@@ -28,20 +28,37 @@
 			* 理念：线程池大部分时间仅使用核心线程，即使有新的任务在等待执行，这就是并发核心线程数的节流阀；若挤压的任务非常多，线程池尝试运行更多的线程来执行，这是最大线程数的节流阀
 		* ThreadPoolExecutor.ctl 字段是一个打包了两个概念字段的原子整型。其中高 3 位存储线程池状态，低 29 位存储线程数量
 			* runStateOf(int c) 指示有效线程数。[0, (2^29)-1]
-			* workerCountOf(int c) 指示线程池状态。[-1, 3]，其中 -1 为正在运行；0 为平滑关闭；1 为强制关闭；3 为已关闭
+			* workerCountOf(int c) 指示线程池状态。[-1, 3]
+				* RUNNING  --- 接受并处理任务
+				* SHUTDOWN  --- 不接受新任务，但会处理老任务
+				* STOP  --- 不接受新任务，也不处理老任务，并且会中断正在处理任务的线程
+				* TIDYING  --- 所有任务结束，且工作线程为空，线程状态变为 TIDYING，并运行 terminated() 方法
+				* TERMINATED  --- terminated() 方法执行结束
+				* 状态切换
+					* RUNNING -> SHUTDOWN  --- 当调用了 shutdown() 时  --- 平滑关闭
+						* 工作线程循环获取任务时，检测到 SHUTDOWN 状态且队列为空时，立即跳出循环并递减线程数量
+						* 注1：对空闲线程，shutdown() 方法中会立即循环发送中断请求给所有空闲的 worker 工作线程，防止空闲线程被阻塞在队列获取调用上
+						* 注2：shutdown() 不等待先前提交的任务执行完成。使用 awaitTermination(long timeout, TimeUnit unit) 可以做到这一点
+					* (RUNNING or SHUTDOWN) -> STOP  --- 当调用了 shutdownNow() 时  --- 强制关闭
+						* 工作线程循环获取任务时，检测到 STOP 状态时，立即跳出循环并递减线程数量
+						* 注：shutdownNow() 方法中会立即循环发送中断请求给所有 worker 工作线程
+					* SHUTDOWN -> TIDYING  --- 当队列和工作线程都为空时
+					* STOP -> TIDYING  --- 当工作线程为空时
+					* TIDYING -> TERMINATED  --- 当钩子方法 terminated() 完成时
 			* ThreadPoolExecutor.ctl 初始化时，值为正在运行 ThreadPoolExecutor.RUNNING，0个线程
 		* ThreadPoolExecutor.Worker 为工作线程。其内部 Thread 为非“分离式”线程，即，进程会等待线程池中所有线程结束
 			* ThreadPoolExecutor.Worker.firstTask 字段保存的一般为创建时提交的任务，除此之外，工作线程将从阻塞队列中获取任务来执行
-* java.uitl.concurrent.ThreadPoolExecutor.AbortPolicy
-	* 继承
-		* RejectedExecutionHandler
-	* 解析
-		* ...
+			* ThreadPoolExecutor.addWorker(null, false) 为增加一个工作线程（消费者）；第一个参数为执行体即为生产者
 * java.util.concurrent.Executors.DefaultThreadFactory
 	* 继承
 		* ThreadFactory
 	* 解析
-		* ...
+		* 一个创建非“分离式”线程的工厂类
+* java.uitl.concurrent.ThreadPoolExecutor.AbortPolicy
+	* 继承
+		* RejectedExecutionHandler
+	* 解析
+		* 某人抛出 RejectedExecutionException 异常的拒绝处理器
 * java.uitl.concurrent.ScheduledThreadPoolExecutor
 	* 继承
 		* ThreadPoolExecutor
@@ -85,15 +102,20 @@
 		* 特性
 			* 创建一个单线程的线程池
 			* 它只会用唯一的工作线程来执行任务，保证所有任务按照指定顺序（FIFO, LIFO, 优先级）执行
-		* 描述
-			* 创建只有一个线程的线程池，当该线程正繁忙时，对于新任务会进入阻塞队列中（无界的阻塞队列）
+			* 注：可以看作是 FixedThreadPool 单线程版本
 	* static ScheduledExecutorService newScheduledThreadPool(int corePoolSize)
 		* 特性
-			* 创建一个定长线程池，支持定时及周期性任务执行
-			* 延迟执行
-		* 描述
-			* 创建一个固定大小的线程池，线程池内线程存活时间无限制，线程池可以支持定时及周期性任务执行，如果所有线程均处于繁忙状态，
-			* 对于新任务会进入 DelayedWorkQueue 队列中，这是一种按照超时时间排序的队列结构
+			* 创建一个固定大小的线程池，支持定时及周期性任务执行；当 corePoolSize == 0 时，仅会创建一个线程来执行任务
+				* 每次提交一个任务时，总是会添加至 ScheduledThreadPoolExecutor.DelayedWorkQueue 队列中，并在必要时启动线程以运行它
+					* 我们无法预先启动线程来运行任务，因为该任务可能还不应该运行
+					* DelayedWorkQueue 是一个按照超时时间排序的最小堆优先队列（延时加上当前时间即为超时时间）。此处延时时间都为0，也就是没有延时
+				* 每个线程的存活时间是无限的 ThreadPoolExecutor.keepAliveTime == 0
+					* 获取任务的方法是一个死循环
+				* ScheduledThreadPoolExecutor.scheduleAtFixedRate() 为周期执行任务接口
+			* 底层创建 ScheduledThreadPoolExecutor 线程池实例，它是 ThreadPoolExecutor 子类
+				* 核心线程为 corePoolSize，并不限最大线程数 ThreadPoolExecutor.maximumPoolSize == Integer.MAX_VALUE
+				* 每个线程的存活时间是无限的 ThreadPoolExecutor.keepAliveTime == 0
+					* 获取任务的方法是一个死循环
 
 ## 关键源码
 
@@ -108,13 +130,124 @@ for (int i = 0; i < 10; i++) {
 	executor.execute(() -> {
 		System.out.println("线程名称：" + Thread.currentThread().getName() + "，执行" + ii);
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(3000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	});
 }
 
+executor.awaitTermination(50000, TimeUnit.MILLISECONDS);
 executor.shutdown();
 System.out.println("main thread");
+
+Output:
+线程名称：pool-1-thread-2，执行1
+main thread
+线程名称：pool-1-thread-1，执行0
+线程名称：pool-1-thread-3，执行2
+线程名称：pool-1-thread-4，执行3
+// --- sleep 3s
+线程名称：pool-1-thread-2，执行4
+线程名称：pool-1-thread-3，执行5
+线程名称：pool-1-thread-1，执行6
+线程名称：pool-1-thread-4，执行7
+// --- sleep 3s
+线程名称：pool-1-thread-2，执行8
+线程名称：pool-1-thread-1，执行9
+```
+
+* CachedThreadPool
+```
+// CachedThreadPool
+ExecutorService executor = Executors.newCachedThreadPool();
+for (int i = 0; i < 10; i++) {
+	final int ii = i;
+	executor.execute(() -> {
+		System.out.println("线程名称：" + Thread.currentThread().getName() + "，执行" + ii);
+	});
+}
+
+executor.awaitTermination(50000, TimeUnit.MILLISECONDS);
+executor.shutdown();
+System.out.println("main thread");
+
+Output:
+线程名称：pool-1-thread-1，执行0
+线程名称：pool-1-thread-2，执行1
+线程名称：pool-1-thread-3，执行2
+线程名称：pool-1-thread-1，执行9
+main thread
+线程名称：pool-1-thread-4，执行3
+线程名称：pool-1-thread-5，执行4
+线程名称：pool-1-thread-6，执行5
+线程名称：pool-1-thread-7，执行6
+线程名称：pool-1-thread-8，执行7
+线程名称：pool-1-thread-9，执行8
+```
+
+* ScheduledThreadPool
+```
+// ScheduledThreadPool
+ExecutorService executor = Executors.newScheduledThreadPool(4);
+for (int i = 0; i < 10; i++) {
+	final int ii = i;
+	executor.execute(() -> {
+		System.out.println("线程名称：" + Thread.currentThread().getName() + "，执行" + ii);
+	});
+}
+
+executor.awaitTermination(50000, TimeUnit.MILLISECONDS);
+executor.shutdown();
+System.out.println("main thread");
+
+Output:
+线程名称：pool-1-thread-1，执行0
+main thread
+线程名称：pool-1-thread-1，执行2
+线程名称：pool-1-thread-1，执行3
+线程名称：pool-1-thread-1，执行4
+线程名称：pool-1-thread-1，执行5
+线程名称：pool-1-thread-2，执行1
+线程名称：pool-1-thread-2，执行7
+线程名称：pool-1-thread-2，执行8
+线程名称：pool-1-thread-2，执行9
+线程名称：pool-1-thread-1，执行6
+
+
+// schedule
+ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+for (int i = 0; i < 10; i++) {
+	final int ii = i;
+	executor.scheduleAtFixedRate(() -> {
+		System.out.println("线程名称：" + Thread.currentThread().getName() + "，执行" + ii);
+	}, 0, 3, TimeUnit.SECONDS);
+}
+
+executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
+executor.shutdown();
+System.out.println("main thread");
+
+Output:
+线程名称：pool-1-thread-1，执行0
+线程名称：pool-1-thread-1，执行1
+线程名称：pool-1-thread-1，执行2
+线程名称：pool-1-thread-1，执行3
+线程名称：pool-1-thread-1，执行4
+线程名称：pool-1-thread-1，执行5
+线程名称：pool-1-thread-1，执行6
+线程名称：pool-1-thread-1，执行7
+线程名称：pool-1-thread-1，执行8
+线程名称：pool-1-thread-1，执行9
+线程名称：pool-1-thread-1，执行0
+线程名称：pool-1-thread-2，执行1
+线程名称：pool-1-thread-1，执行4
+线程名称：pool-1-thread-3，执行3
+线程名称：pool-1-thread-4，执行2
+线程名称：pool-1-thread-1，执行6
+线程名称：pool-1-thread-3，执行7
+线程名称：pool-1-thread-2，执行5
+线程名称：pool-1-thread-1，执行9
+线程名称：pool-1-thread-4，执行8
+main thread
 ```
