@@ -2,7 +2,6 @@
 
 ## 基础容器
 #### 接口
-* Collection
 * Collection - Iterable
 * List - Collection
 * Deque - Queue - Collection
@@ -18,7 +17,7 @@
 	* Queue - 有序可重复集合，不提供根据元素的索引来访问，使用 add()/offer(),push()/pop(),poll()/peek(),remove() 来访问
 		* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
 		* PriorityQueue 底层是最小堆，需实现 Comparable<T> 接口，当然也可以传入比较器
-		* Deque 是双端队列
+		* Deque 是双端队列，可高效的进行头尾操作的队列结构
 	* Set - 代表无序不可重复集，只能根据元素本身来访问
 		* 依赖 equals(), hashCode()。通常情况下，你应该重新定义这两个接口的实现
 	* SortedSet - 代表有序不可重复集
@@ -65,7 +64,7 @@
 	* 解析
 		* 可高效的进行插入、删除的列表结构，可作为队列结构（头尾操作）使用，用 Deque - Queue 标识
 		* 底层使用 LinkedList.Node 实现双向链表
-		* 与 ArrayDeque 相比，随机访问效率不高，但频繁的插入、删除效率会更佳，这也是线性表存在的意义
+		* 与 ArrayDeque 相比，随机访问效率不高，但频繁的插入、删除效率会更佳，这也是线性链表存在的意义
 		* 虽然该列表也提供了随机访问接口，但效率低下，请不要使用
 			* 从该列表没有实现 RandomAccess 接口，就提示了我们不应该对它进行随机访问
 		* modCount 属性字段用来标识列表的底层数组是否有结构性的变化。结构性变化指的是：增、删元素
@@ -88,14 +87,14 @@
 		* 与 LinkedList 相比，随机访问效率更高，但频繁的插入、删除效率欠佳，因为这可能会导致底层数组的扩容（内存要重新分配及拷贝）
 		* head 和 tail 索引，支持高效的头尾操作。head 指向末端索引，tail 从起始索引开始
 			* 每次 head == tail 时，自动扩容，底层的数组长度增加 1 倍。长度总是 2 的幂次方
-			* 底层使用的数据结构也常被称为循环数组
+			* 底层使用的数据结构也常常被称为循环数组
 * PriorityQueue<E>
 	* 继承
 		* AbstractQueue - Queue
 		* Cloneable
 		* Serializable
 	* 解析
-		* 高效的最小堆实现，可当作优先队列使用，用 Queue 标识
+		* 高效的最小堆实现的优先队列，用 Queue 标识
 			* 最小堆：任一非终端节点的数据值均不大于其子节点的值；添加、删除的时间复杂度为 O(logn)
 		* 底层使用 Object[] 数组实现，其中存放队列元素
 * HashSet
@@ -121,8 +120,8 @@
 
 ## 迭代器
 #### 接口
-* ListIterator - Iterator
 * Iterator
+* ListIterator - Iterator
 * Iterable
 * 特性
 	* Iterable - 若一个容器实现了该接口，则它就可以使用 for-in 语法结构进行迭代遍历
@@ -130,7 +129,7 @@
 		* 调用 remove() 前，需调用 next()；调用 next() 前，强烈建议先调用 hasNext()
 		* forEachRemaining() 接口不可改变列表的结构，否则立即抛出 ConcurrentModificationException 异常
 	* ListIterator - 列表迭代器，主要应用在与位置相关的容器上，比如 ArrayList, LinkedList, SubList
-		* 相比 Iterator 接口，增加了向前迭代接口，如 hasPrevious(),previous(),previousIndex(),nextIndex()
+		* 相比 Iterator 接口，增加了前向迭代接口，如 hasPrevious(),previous(),previousIndex(),nextIndex()
 		* 提供增、删、改、查接口，如 set(E e), add(E e)；不管概念还是实现上，这两个接口都与位置相关
 
 #### 实现
@@ -144,7 +143,7 @@
 * 解析
 	* 创建迭代器时，立即拷贝原始容器的 modCount 到迭代器实例中
 		* 后续任何迭代器操作都会比对迭代器与原始容器的 modCount 值是否相等，若不相等，会立即抛出 ConcurrentModificationException
-		* 这么设计，可以解决并发问题，也可以解决迭代器失效问题
+		* 这么设计，可以解决容器并发更新问题，也可以解决迭代器失效问题
 	* next() 与 remove() 必须成对使用。即，在 remove() 前，需要 next() 访问该元素；使用 next()，强烈建议先调用 hasNext()
 		* 内部 lastRet 字段是上次访问的元素的索引，也是回退索引，remove() 后，迭代器的 cursor 将回退到该值，以防止迭代器失效
 	* 综合以上的接口设计以及附加的限制，看似笨拙，实际上可以解决 C++ 中令人讨厌的迭代器失效问题
@@ -155,7 +154,7 @@
 * Arrays
 	* asList()
 		* 构建 Arrays.ArrayList<E> 实体，与 ArrayList<E> 基本一致，但底层使用的存储容器是 E[] 数组
-			* 这会使得 toArray() 方法返回 T[] 类型数据。虽然该方法返回类型是 Object[]，但请记住这是容器，和泛型没什么区别
+			* 这会使得 toArray() 方法返回 T[] 类型数据。虽然该方法返回类型是 Object[]，但请记住 Object 和泛型没什么区别
 	* sort()/parallelSort()
 		* 使用优化的快排算法，就地排序，各种重载版本
 	* binarySearch()
@@ -205,13 +204,13 @@ public class ArrayList<E> extends AbstractList<E>
 	...
 	transient Object[] elementData;	// 存储容器
 	private int size;		// 元素个数
-	
+
 	// 增
 	public boolean add(E e) {
-        	ensureCapacityInternal(size + 1);  // Increments modCount!!
-        	elementData[size++] = e;
-        	return true;
-    	}
+		ensureCapacityInternal(size + 1);  // Increments modCount!!
+		elementData[size++] = e;
+		return true;
+	}
 	// 删
 	public E remove(int index) {
 		rangeCheck(index);
@@ -227,7 +226,7 @@ public class ArrayList<E> extends AbstractList<E>
 		elementData[--size] = null; // clear to let GC do its work
 
 		return oldValue;
-    	}
+	}
 	// 改
 	public E set(int index, E element) {
 		rangeCheck(index);
@@ -235,24 +234,25 @@ public class ArrayList<E> extends AbstractList<E>
 		E oldValue = elementData(index);
 		elementData[index] = element;
 		return oldValue;
-    	}
+	}
 	// 查
 	@SuppressWarnings("unchecked")
-    	E elementData(int index) {
-        	return (E) elementData[index];
-    	}
+	E elementData(int index) {
+		return (E) elementData[index];
+	}
 	// 转换成数组
 	@SuppressWarnings("unchecked")
-    	public <T> T[] toArray(T[] a) {
+	public <T> T[] toArray(T[] a) {
 		// 参数 a 长度不够时，返回一个新建的数组并复制元素
 		if (a.length < size)
-		    // Make a new array of a's runtime type, but my contents:
-		    return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+			// Make a new array of a's runtime type, but my contents:
+			return (T[]) Arrays.copyOf(elementData, size, a.getClass());
+		
 		System.arraycopy(elementData, 0, a, 0, size);
 		if (a.length > size)
-		    a[size] = null;
+			a[size] = null;
 		return a;
-    	}
+	}
 }
 ```
 
