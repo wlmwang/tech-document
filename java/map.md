@@ -3,23 +3,23 @@
 ## 基础容器
 #### 接口
 * Map
-* SortedMap - Map
-* NavigableMap - SortedMap - Map
+* SortedMap -> Map
+* NavigableMap -> SortedMap -> Map
 * 特性
 	* Map - 存储 k-v 键值对的无序映射表；可根据 k 访问 v；键数据类型依赖 equals(), hashCode()
-		* 部分接口会使“值”也依赖 equals()，如：containsValue。如果使用 EntrySet 视图，“值”会依赖 equals()
+		* 部分接口会使“值”也依赖 equals()，如：containsValue()。如果使用 EntrySet 视图，“值”会依赖 equals()
 	* SortedMap - 存储 k-v 键值对的有序映射表；可根据 k 访问 v；键数据类型除依赖 equals(), hashCode()，还依赖 compareTo()
 	* NavigableMap - 增强了范围查找。比如：获取（并删除）最小值、最大值；大于（等于）某个key的最小值；小于（等于）某个key的最大值等
 
 #### 实现
 * HashMap<K,V>
 	* 继承
-		* AbstractMap
+		* AbstractMap -> Map
 		* Map
 		* Cloneable
 		* Serializable
 	* 解析
-		* 默认构造函数，负载因子为 0.75，hash 桶的初始容量为 16，最大不能超过 2^30，并且一定是 2 的指数倍（非常重要！）
+		* 默认构造函数，负载因子为 0.75，hash 桶的初始容量为 16，最大容量不能超过 2^30，并且一定是 2 的指数倍（非常重要！）
 			* 第一次添加元素时，初始化容量为 16，扩容阈值 threshold 设置为容量的 0.75 倍
 				* 负载因子作用：当映射表的总元素个数超过当前桶容量的 loadFactor 倍后会触发扩容；每次会扩容为现有容量的 2 倍
 			* resize() 扩容方法，是一个精心设计过的算法，甚是巧妙！
@@ -55,8 +55,8 @@
 				* 视图中，迭代器删除接口，本质上是删除当前迭代到的 entrySet 的那个键
 * TreeMap
 	* 继承
-		* AbstractMap
-		* NavigableMap - SortedMap
+		* AbstractMap -> Map
+		* NavigableMap -> SortedMap
 		* Map
 		* Cloneable
 		* Serializable

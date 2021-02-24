@@ -2,9 +2,9 @@
 
 ## 基础容器
 #### 接口
-* ExecutorService - Executor
-* ScheduledExecutorService - ExecutorService
-* BlockingQueue - Queue
+* ExecutorService -> Executor
+* ScheduledExecutorService -> ExecutorService
+* BlockingQueue -> Queue
 * ThreadFactory
 * RejectedExecutionHandler
 

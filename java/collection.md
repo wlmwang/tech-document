@@ -2,87 +2,86 @@
 
 ## 基础容器
 #### 接口
-* Collection - Iterable
-* List - Collection
-* Deque - Queue - Collection
-* RandomAccess
-* Set
-* SortedSet - Set
-* NavigableSet - SortedSet - Set
+* Collection -> Iterable
+* List -> Collection
+* Queue -> Collection
+* Deque -> Queue - Collection
+* SortedSet -> Set
+* NavigableSet -> SortedSet - Set
 * Iterator
+* RandomAccess
 * 特性
 	* List - 有序可重复集合，可直接根据元素的索引来访问
 		* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
 		* 部分接口依赖 compareTo()，当然也可以传入比较器，如 sort()
 	* Queue - 有序可重复集合，不提供根据元素的索引来访问，使用 add()/offer(),push()/pop(),poll()/peek(),remove() 来访问
 		* 部分接口依赖 equals()，如 indexOf(o)/contains(o)/remove(o)/removeAll(c)/retainAll(c)
-		* PriorityQueue 底层是最小堆，需实现 Comparable<T> 接口，当然也可以传入比较器
+		* PriorityQueue 底层是最小堆的优先队列，需实现 Comparable<T> 接口，当然也可以传入比较器
 		* Deque 是双端队列，可高效的进行头尾操作的队列结构
 	* Set - 代表无序不可重复集，只能根据元素本身来访问
 		* 依赖 equals(), hashCode()。通常情况下，你应该重新定义这两个接口的实现
 	* SortedSet - 代表有序不可重复集
 		* 除依赖 equals(), hashCode() 外，还依赖 compareTo()。通常情况下，你应该重新定义这三个接口的实现
 	* NavigableSet - 增强了范围查找。比如：获取（并删除）最小值、最大值；大于（等于）某个key的最小值；小于（等于）某个key的最大值等
-	* Iterator - 本质上，迭代器的工作是辅助具体的容器进行访问索引的自动化管理，它不持有实际的数据
+	* Iterator - 本质上，迭代器的工作是辅助具体的容器进行索引的自动化管理，它不持有实际的数据
 
 #### 实现
 * ArrayList<E>
 	* 继承
-		* AbstractList - List
+		* AbstractList -> List
 		* RandomAccess
 		* Cloneable
 		* Serializable
 	* 解析
-		* 可高效的进行随机访问（按索引访问）的列表结构，用 RandomAccess 标识
+		* 可高效的进行随机访问（按索引访问）的列表结构，用 List,RandomAccess 标识
 		* 底层使用 Object[] 数组存放列表元素
 			* Java 对象实例（数组也是对象）带有类型信息，与存放的容器无关（需可转换）。比如 Object[] 可以存放任何对象，因为他是所有类的基类
-				* 所以 toArray() 有两个不同的重载版本，分别返回 Object[] 和 T[] 数组
-				* 其中泛型版本，传递的参数类型起到控制方法的返回类型，并且当长度足够时，直接使用该数组，否则底层会创建一个 T[] 数组
-		* 默认构造的列表容量为 10，不过此时并没有分配内存（直到添加元素时分配），用一个 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 常量来标识
-			* 数组每次扩容，长度增加当前容量的 1.5 倍
+				* 因而 toArray() 有两个不同的重载版本，分别返回 Object[] 和 T[] 数组
+					* 其中泛型版本，传递的参数类型起到控制方法的返回类型。当数组长度足够时，直接使用它，否则底层会创建一个 T[] 数组
+		* 默认构造的列表的容量为 10，不过此时并没有分配内存（直到添加元素时分配），用一个 DEFAULTCAPACITY_EMPTY_ELEMENTDATA 常量来标识
+			* 数组每次需要扩容时，长度增加到当前容量的 1.5 倍
 		* 列表为空时（size == 0），`elementData` 指向空数组，用一个 EMPTY_ELEMENTDATA 常量来标识
 		* modCount 属性字段用来标识列表的底层数组是否有结构性的变化。结构性变化指的是：增、删元素
-			* 用来支持迭代器的快速失败算法，即，快速检测是否有并发更新，然后立即抛出 ConcurrentModificationException 异常
-			* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，可用来防止迭代器失效
-		* `overflow-conscious code` 源码中的这条注释针对列表长度最大不会超过 Integer.MAX_VALUE
-			* 超过时，int会溢出为负值，底层会直接抛出 OOM 异常
-		* `c.toArray might (incorrectly) not return Object[] (see 6260652)` 源码中的这条注释针对的是
+			* 用来支持迭代器的快速失败算法。即，快速检测是否有并发更新，从而可立即抛出 ConcurrentModificationException 异常
+			* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关。所以说它实际上是防止迭代器失效
+		* `overflow-conscious code` 源码中的这条注释，主要针对列表长度最大不会超过 Integer.MAX_VALUE
+			* 超过时，int会溢出为负值，底层会抛出 OOM 异常
+		* `c.toArray might (incorrectly) not return Object[] (see 6260652)` 源码中的这条注释，主要针对 toArray() 可能返回 T[] 数组
 			* Arrays.asList() 创建的列表（java.util.Arrays.ArrayList），其 c.toArray() 返回的不是 Object[] 数组，而是 T[] 数组
 		* 代码中很多地方都调用了：Arrays.copyOf(original, newLength, newType) / Arrays.copyOf(original, newLength)
-			* 作用是：总是会分配一个新数组的内存空间，然后将旧的 original 内存数据按字节复制到新内存中。底层原理请看“工具类”中的解析
-		* clone() 时，底层使用的 Object[] 数组会被自动拷贝，即，新建后复制，是按字节拷贝
+			* 作用是：总是会分配一个新数组的内存，然后将旧的 original 内存数据按字节复制到新内存中。底层原理请看“工具类”中的解析
+		* ArrayList.clone() 时，底层使用的 Object[] 数组会被自动拷贝，即，新建后复制，是按字节拷贝
 		* AbstractList.SubList 是内部类，但它还是使用 parent 字段去引用父列表，主要是为实现 SubList 递归生成子列表的功能
 		* AbstractList.ArrayListSpliterator 分隔迭代器，主要用来支持集合流的特性
-			* 算法核心是对迭代器进行二分切割
+			* 算法核心是对迭代器进行二分切割。在并发流中可分批处理数据
 		* writeObject/readObject
 * LinkedList<E>
 	* 继承
-		* AbstractSequentialList - List
-		* Deque - Queue
+		* AbstractSequentialList -> List
+		* Deque -> Queue
 		* Cloneable
 		* Serializable
 	* 解析
-		* 可高效的进行插入、删除的列表结构，可作为队列结构（头尾操作）使用，用 Deque - Queue 标识
+		* 可高效的进行插入、删除的列表结构，可作为队列结构（头尾操作）使用，用 List,Deque 标识
 		* 底层使用 LinkedList.Node 实现双向链表
-		* 与 ArrayDeque 相比，随机访问效率不高，但频繁的插入、删除效率会更佳，这也是线性链表存在的意义
-		* 虽然该列表也提供了随机访问接口，但效率低下，请不要使用
-			* 从该列表没有实现 RandomAccess 接口，就提示了我们不应该对它进行随机访问
+		* 与 ArrayDeque 相比，随机访问效率不高，但频繁的插入、删除效率会更佳，这也是链表存在的意义
 		* modCount 属性字段用来标识列表的底层数组是否有结构性的变化。结构性变化指的是：增、删元素
-			* 用来支持迭代器的快速失败算法，即，快速检测是否有并发更新，然后立即抛出 ConcurrentModificationException 异常
-			* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关，可用来防止迭代器失效
-		* clone() 时，底层使用的链表节点也会被拷贝（循环调用 add() 方法）
+			* 用来支持迭代器的快速失败算法。即，快速检测是否有并发更新，从而可立即抛出 ConcurrentModificationException 异常
+			* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关。所以说它实际上是防止迭代器失效
+		* LinkedList.clone() 时，底层使用的链表节点也会被拷贝（循环调用 add() 方法）
 		* LinkedList.LLSpliterator 分隔迭代器，主要用来支持集合流的特性
-			* 算法核心是对迭代器进行二分切割
+			* 算法核心是对迭代器进行二分切割。在并发流中可分批处理数据
 			* 注：trySplit() 方法返回的是一个数组分隔迭代器 Spliterators.ArraySpliterator
-		* writeObject/readObject
+		* 注：虽然 LinkedList 列表也提供了随机访问接口，但效率低下，请不要使用
+			* 从该列表没有实现 RandomAccess 接口，就提示了我们不应该对它进行随机访问
 * ArrayDeque<E>
 	* 继承
-		* AbstractCollection - Collection
-		* Deque - Queue
+		* AbstractCollection -> Collection
+		* Deque -> Queue
 		* Cloneable
 		* Serializable
 	* 解析
-		* 可高效的进行插入、删除的双端队列结构，用 Deque - Queue 标识
+		* 可高效的进行插入、删除的双端队列结构，用 List,Deque 标识
 		* 底层使用 Object[] 数组存放列表元素
 		* 与 LinkedList 相比，随机访问效率更高，但频繁的插入、删除效率欠佳，因为这可能会导致底层数组的扩容（内存要重新分配及拷贝）
 		* head 和 tail 索引，支持高效的头尾操作。head 指向末端索引，tail 从起始索引开始
@@ -90,7 +89,7 @@
 			* 底层使用的数据结构也常常被称为循环数组
 * PriorityQueue<E>
 	* 继承
-		* AbstractQueue - Queue
+		* AbstractQueue -> Queue
 		* Cloneable
 		* Serializable
 	* 解析
@@ -121,7 +120,7 @@
 ## 迭代器
 #### 接口
 * Iterator
-* ListIterator - Iterator
+* ListIterator -> Iterator
 * Iterable
 * 特性
 	* Iterable - 若一个容器实现了该接口，则它就可以使用 for-in 语法结构进行迭代遍历

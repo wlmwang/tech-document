@@ -2,10 +2,10 @@
 
 ## 基础容器
 #### 接口
-* FilterInputStream - InputStream
-* FilterOutputStream - OutputStream
-* FilterReader - Reader
-* FilterWriter - Writer
+* FilterInputStream -> InputStream
+* FilterOutputStream -> OutputStream
+* FilterReader -> Reader
+* FilterWriter -> Writer
 * DataInput
 * DataOutput
 * FileChannel
