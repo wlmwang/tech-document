@@ -49,6 +49,13 @@
 		* ThreadPoolExecutor.Worker 为工作线程。其内部 Thread 为非“分离式”线程，即，进程会等待线程池中所有线程结束
 			* ThreadPoolExecutor.Worker.firstTask 字段保存的一般为创建时提交的任务，除此之外，工作线程将从阻塞队列中获取任务来执行
 			* ThreadPoolExecutor.addWorker(null, false) 为增加一个工作线程（消费者）；第一个参数为执行体即为生产者
+		* 接口
+			* public void execute(Runnable command)
+				* 提交异步任务接口，无返回值
+			* public <T> Future<T> submit(Callable<T> task)
+				* 提交异步任务接口，有返回值
+				* T Future.get() 可获取任务的执行结果，是一个阻塞函数
+					* 内部就是将任务的执行结果保存至 Future.outcome 字段中；用 Future.state 区分任务执行进度
 * java.util.concurrent.Executors.DefaultThreadFactory
 	* 继承
 		* ThreadFactory
@@ -81,6 +88,8 @@
 				* 每次提交一个任务时，线程池可以智能的添加新线程来处理任务
 					* 如果线程池的大小超过了处理任务所需要的线程，那么就会回收部分空闲（60s 不执行任务）的线程
 					* 此线程池不会对线程大小做限制，线程池大小完全依赖于操作系统（或者说 JVM）能够创建的最大线程大小
+					* 算法：同步队列 SynchronousQueue.offer() 方法添加节点前总是会先尝试匹配现有节点。生产者和消费者会自动匹配，随即从队列中删除，因为此时闭环已形成
+						* 也就是说，同一时间，只会有一种类型的节点在队列中。要么全是消费者（线程），当一个生产者（线程）添加一个任务后，随机唤醒一个消费者来处理该任务
 			* 底层创建 ThreadPoolExecutor 线程池实例
 				* 核心线程为 0，并不限最大线程数 ThreadPoolExecutor.maximumPoolSize == Integer.MAX_VALUE
 				* 每个线程的存活时间为 60s，ThreadPoolExecutor.keepAliveTime == TimeUnit.SECONDS.toNanos(60)
@@ -118,7 +127,7 @@
 ## 示例代码
 * FixedThreadPool
 ```
-// FixedThreadPool
+// Runnable
 ExecutorService executor = Executors.newFixedThreadPool(4);
 for (int i = 0; i < 10; i++) {
 	final int ii = i;
@@ -149,11 +158,59 @@ main thread
 // --- sleep 3s
 线程名称：pool-1-thread-2，执行8
 线程名称：pool-1-thread-1，执行9
+
+
+// Callable
+ArrayList<Future<Integer>> futures = new ArrayList<>();
+ExecutorService executor = Executors.newFixedThreadPool(4);
+for (int i = 0; i < 10; i++) {
+	final int ii = i;
+	Future<Integer> future = executor.submit(() -> {
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return ii;
+	});
+	futures.add(future);
+}
+
+Iterator<Future<Integer>> it = futures.iterator();
+while (true) {
+	while (it.hasNext()) {
+		Future<Integer> future = it.next();
+		if (future.isDone()) {
+			System.out.println("执行结果：" + future.get());
+			it.remove();
+		}
+	}
+	if (futures.isEmpty()) break;
+	it = futures.iterator();
+}
+
+executor.shutdown();
+System.out.println("main thread");
+
+Output:
+执行结果：0
+执行结果：1
+执行结果：3
+执行结果：2
+// --- sleep 3s
+执行结果：4
+执行结果：5
+执行结果：6
+执行结果：7
+// --- sleep 3s
+执行结果：9
+执行结果：8
+main thread
 ```
 
 * CachedThreadPool
 ```
-// CachedThreadPool
+// Runnable
 ExecutorService executor = Executors.newCachedThreadPool();
 for (int i = 0; i < 10; i++) {
 	final int ii = i;
@@ -177,11 +234,52 @@ main thread
 线程名称：pool-1-thread-7，执行6
 线程名称：pool-1-thread-8，执行7
 线程名称：pool-1-thread-9，执行8
+
+
+// Callable
+ArrayList<Future<Integer>> futures = new ArrayList<>();
+ExecutorService executor = Executors.newCachedThreadPool();
+for (int i = 0; i < 10; i++) {
+	final int ii = i;
+	Future<Integer> future = executor.submit(() -> {
+		return ii;
+	});
+	futures.add(future);
+}
+
+Iterator<Future<Integer>> it = futures.iterator();
+while (true) {
+	while (it.hasNext()) {
+		Future<Integer> future = it.next();
+		if (future.isDone()) {
+			System.out.println("执行结果：" + future.get());
+			it.remove();
+		}
+	}
+	if (futures.isEmpty()) break;
+	it = futures.iterator();
+}
+
+executor.shutdown();
+System.out.println("main thread");
+
+Output:
+执行结果：0
+执行结果：7
+执行结果：9
+执行结果：1
+执行结果：2
+执行结果：3
+执行结果：4
+执行结果：5
+执行结果：6
+执行结果：8
+main thread
 ```
 
 * ScheduledThreadPool
 ```
-// ScheduledThreadPool
+// Callable
 ExecutorService executor = Executors.newScheduledThreadPool(4);
 for (int i = 0; i < 10; i++) {
 	final int ii = i;
@@ -241,5 +339,6 @@ Output:
 线程名称：pool-1-thread-2，执行5
 线程名称：pool-1-thread-1，执行9
 线程名称：pool-1-thread-4，执行8
+// time use 5s
 main thread
 ```
