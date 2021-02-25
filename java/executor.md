@@ -4,6 +4,9 @@
 #### 接口
 * ExecutorService -> Executor
 * ScheduledExecutorService -> ExecutorService
+* RunnableFuture -> Future
+* Runnable
+* Callable
 * BlockingQueue -> Queue
 * ThreadFactory
 * RejectedExecutionHandler
@@ -55,7 +58,7 @@
 			* public <T> Future<T> submit(Callable<T> task)
 				* 提交异步任务接口，有返回值
 				* T Future.get() 可获取任务的执行结果，是一个阻塞函数
-					* 内部就是将任务的执行结果保存至 Future.outcome 字段中；用 Future.state 区分任务执行进度
+					* 内部将任务封装到 FutureTask<V> 实例中，将执行结果保存至 FutureTask.outcome 字段中；用 FutureTask.state 区分任务执行进度
 * java.util.concurrent.Executors.DefaultThreadFactory
 	* 继承
 		* ThreadFactory

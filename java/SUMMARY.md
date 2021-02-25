@@ -18,13 +18,11 @@
 * [线程框架]
 	* [thread](thread.md)
 	* [executor](executor.md)
-	* [forkJoin](fork-join.md)
-	* [blockingQueue](blocking-queue.md)
+	* [forkjoin](forkjoin.md)
+	* [blockingqueue](blockingqueue.md)
 * [日志框架]
 	* logger
 * [序列化机制]
 	* serializer
 * 类加载机制
 	* classloader
-* [JDBC 库]
-   * jdbc

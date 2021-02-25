@@ -53,8 +53,7 @@
 		* ArrayList.clone() 时，底层使用的 Object[] 数组会被自动拷贝，即，新建后复制，是按字节拷贝
 		* AbstractList.SubList 是内部类，但它还是使用 parent 字段去引用父列表，主要是为实现 SubList 递归生成子列表的功能
 		* AbstractList.ArrayListSpliterator 分隔迭代器，主要用来支持集合流的特性
-			* 算法核心是对迭代器进行二分切割。在并发流中可分批处理数据
-		* writeObject/readObject
+			* 算法核心是对迭代器进行二分切割。场景：将大数据反复“裂变”成一系列小数据，多应用在 stream 流处理中
 * LinkedList<E>
 	* 继承
 		* AbstractSequentialList -> List
@@ -70,7 +69,7 @@
 			* 实际上，如果一个列表创建了两个迭代器，其中一个调用了更新接口后，另一个迭代器将不可用，与是否是并发无关。所以说它实际上是防止迭代器失效
 		* LinkedList.clone() 时，底层使用的链表节点也会被拷贝（循环调用 add() 方法）
 		* LinkedList.LLSpliterator 分隔迭代器，主要用来支持集合流的特性
-			* 算法核心是对迭代器进行二分切割。在并发流中可分批处理数据
+			* 算法核心是对迭代器进行二分切割。场景：将大数据反复“裂变”成一系列小数据，多应用在 stream 流处理中
 			* 注：trySplit() 方法返回的是一个数组分隔迭代器 Spliterators.ArraySpliterator
 		* 注：虽然 LinkedList 列表也提供了随机访问接口，但效率低下，请不要使用
 			* 从该列表没有实现 RandomAccess 接口，就提示了我们不应该对它进行随机访问
