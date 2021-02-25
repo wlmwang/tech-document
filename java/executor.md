@@ -163,7 +163,7 @@ main thread
 线程名称：pool-1-thread-1，执行9
 
 
-// Callable
+// Callable --- 这个示例最好的工具是 forkJoin，省去手动归并
 ArrayList<Future<Integer>> futures = new ArrayList<>();
 ExecutorService executor = Executors.newFixedThreadPool(4);
 for (int i = 0; i < 10; i++) {
@@ -179,6 +179,7 @@ for (int i = 0; i < 10; i++) {
 	futures.add(future);
 }
 
+// 归并
 Iterator<Future<Integer>> it = futures.iterator();
 while (true) {
 	while (it.hasNext()) {
@@ -239,7 +240,7 @@ main thread
 线程名称：pool-1-thread-9，执行8
 
 
-// Callable
+// Callable --- 这个示例最好的工具是 forkJoin，省去手动归并
 ArrayList<Future<Integer>> futures = new ArrayList<>();
 ExecutorService executor = Executors.newCachedThreadPool();
 for (int i = 0; i < 10; i++) {
@@ -250,6 +251,7 @@ for (int i = 0; i < 10; i++) {
 	futures.add(future);
 }
 
+// 归并
 Iterator<Future<Integer>> it = futures.iterator();
 while (true) {
 	while (it.hasNext()) {
@@ -282,7 +284,7 @@ main thread
 
 * ScheduledThreadPool
 ```
-// Callable
+// Runnable
 ExecutorService executor = Executors.newScheduledThreadPool(4);
 for (int i = 0; i < 10; i++) {
 	final int ii = i;

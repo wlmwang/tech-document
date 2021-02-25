@@ -46,9 +46,7 @@ public class forkJoinTest
 			}
 			SumTask subtask1 = new SumTask(startValue, (startValue + endValue)/2);
 			SumTask subtask2 = new SumTask((startValue + endValue)/2 + 1, endValue);
-			subtask1.fork();
-			subtask2.fork();
-			return subtask1.join() + subtask2.join();
+			return subtask1.fork().join() + subtask2.fork().join();
 		}
 	}
 }
