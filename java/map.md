@@ -62,7 +62,7 @@
 		* Serializable
 	* 解析
 		* TreeMap<K,V> 使用 TreeMap.Entry<K,V> - Map.Entry<K,V> 数据结构包装键、值对
-			* TreeMap.Entry<K,V> 中 left/right/parent 字段用来支持二叉查找树算法，color 字段用来支持红黑树算法
+			* TreeMap.Entry<K,V> 中 left/right 字段用来支持二叉查找树算法，parent/color 字段用来支持红黑树算法
 				* 注：TreeMap.Entry 重写了 hashCode() 方法，让 k-v 都参与计算。主要是为了 TreeMap.entrySet() 返回的 Set 集的唯一性要求
 		* TreeMap 的三个视图：键值视图 TreeMap<K,V>.entrySet()、键视图 TreeMap<K,V>.keySet()、值视图 TreeMap<K,V>.values() 特性与 HashMap 描述大致相同
 			* 区别是：这三者的迭代结果是按序的，都是按照 K 的大小
