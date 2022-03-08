@@ -82,72 +82,76 @@
 * 网络编程复杂且细节繁多，短时间内，没有办法看完并分析所有类，等后续慢慢补充吧。这里写一个经典示例来结束本节
 ```java
 import java.io.*;
-import java.net.Socket;
-import java.net.ServerSocket;
+import java.net.*
 import java.time.LocalDateTime;
-import java.time.Duration;
 
 public class plainBioTest
 {
 	public static void main(String[] args) throws Exception {
 		new Thread(() -> {
-			new PlainBioServer().serve(9090);
-		}).start();
+            new PlainBioServer().serve(9090);
+        }).start();
+        Thread.sleep(500);
 
-		for (int i = 0; i < 5; i++) {
-			new Thread(() -> {
-				new PlainBioClient().request(9090);
-			}).start();
-		}
-
-		Thread.sleep(Duration.ofDays(1).toMillis());
-	}
-}
-
-// 服务端
-class PlainBioServer {
-	public void serve(int port) {
-		try (ServerSocket ss = new ServerSocket(port)) {
-			for (;;) {
-				Socket cs = ss.accept();
-				new Thread(() -> {
-					try {
-						InputStream in = cs.getInputStream();
-						OutputStream out = cs.getOutputStream();
-
-						BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-						BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
-
-						String mess = br.readLine();
-						System.out.println("客户端：" + mess);
-
-						bw.write(mess + " - " + LocalDateTime.now() + "\n");
-						bw.flush();
-					} catch (IOException ex) {
-						ex.printStackTrace();
-					}
-				}).start();
-			}
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
+        new PlainBioClient().request(9090);
 	}
 }
 
 // 客户端
 class PlainBioClient {
-	public void request(int port) {
-		try (Socket cs = new Socket(InetAddress.getLocalHost(), port)) {
-			InputStream in = cs.getInputStream();
-			OutputStream out = cs.getOutputStream();
+    public void request(int port) {
+        try (Socket cs = new Socket(InetAddress.getLocalHost(), port)) {
+            InputStream in = cs.getInputStream();
+            OutputStream out = cs.getOutputStream();
 
-			out.write(("hello world" + ":" + LocalDateTime.now() + "\n").getBytes("UTF-8"));
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String mess = br.readLine();
-			System.out.println("服务端：" + mess);
-		} catch (IOException ex) {
-			ex.printStackTrace();
-		}
-	}
+            out.write(("hello world" + ":" + LocalDateTime.now()).getBytes());
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String mess = br.readLine();
+            System.out.println("客户端收取：" + mess);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+}
+
+// 服务端
+class PlainBioServer {
+    public void serve(int port) {
+        try (ServerSocket ss = new ServerSocket(port)) {
+            for (;;) {
+                Socket cs = ss.accept();
+                new Thread(() -> {
+                    try {
+                        InputStream in = cs.getInputStream();
+                        OutputStream out = cs.getOutputStream();
+
+                        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out));
+
+                        String mess = "";
+                        char[] buf = new char[128];
+                        if (br.read(buf, 0, 128) > 0) {
+                            mess = String.valueOf(buf);
+                        }
+                        System.out.println("服务器收取：" + mess);
+
+                        bw.write("服务端回显 - " + mess + " ～ " + LocalDateTime.now() + "\n");
+                        bw.flush();
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    } finally {
+                        try {
+                            cs.close();
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
 }
 ```
