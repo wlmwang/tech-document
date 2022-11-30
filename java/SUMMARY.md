@@ -1,7 +1,5 @@
 # 目录
 
-* [前序]
-	* [prologue](prologue.md)
 * [集合框架]
 	* [collection](collection.md)
 	* [map](map.md)
